@@ -13,9 +13,6 @@ chrome.runtime.getBackgroundPage((background) => {
 						chrome.management.setEnabled(message.id, !message.disable);
 					});
 					break;
-				default:
-					console.log(`Unrecognized Message: ${message.cmd}`);
-					break;
 			}
 		});
 		chrome.browserAction.enable();
@@ -42,8 +39,8 @@ chrome.runtime.getBackgroundPage((background) => {
 					const menuHTML=`
 					<div class="topBar">
 						<h1>Tr3nch</h1>
-						<a href="https://whelement.github.io" target="_blank">Whelement Homepage</a>
-						<a href="https://discord.gg" target="_blank">Whelement Discord</a>
+						<a href="https://whelement.me" target="_blank">Whelement Homepage</a>
+						<a href="https://discord.gg/fPU8cUvf" target="_blank">Whelement Discord</a>
 					</div>
 					<div id="opt-container"></div>
 					<style>
@@ -181,21 +178,21 @@ chrome.runtime.getBackgroundPage((background) => {
 					let extEvalBox=document.createElement('div');
 					/* We can use innerHTML because we inherit the CSP from our extension */
 					extEvalBox.innerHTML='<br><h1>Run Code As Background Page</h1><textarea id="extEvalBox"></textarea><br><button id="extEvalButton">Run as Background</button>';
-					extEvalBox.querySelector('#extEvalButton').addEventListener('click', async () => {
+					extEvalBox.querySelector('#extEvalButton').addEventListener('click', () => {
 						asExt(document.querySelector('#extEvalBox').value);
 					});
 					container.append(extEvalBox);
 
 					let pbEvalBox=document.createElement('div');
 					pbEvalBox.innerHTML='<br><h1>Run Code As Sh0vel</h1><textarea id="pbEvalBox"></textarea><br><button id="pbEvalButton">Run as Sh0vel</button>';
-					pbEvalBox.querySelector('#pbEvalButton').addEventListener('click', async () => {
+					pbEvalBox.querySelector('#pbEvalButton').addEventListener('click', () => {
 						asPage(document.querySelector('#pbEvalBox').value);
 					});
 					container.append(pbEvalBox);
 
 					let pageEvalBox=document.createElement('div');
 					pageEvalBox.innerHTML='<br><h1>Run Code On This Page</h1><textarea id="pageEvalBox"></textarea><br><button id="pageEvalButton">Run as Page</button>';
-					pageEvalBox.querySelector('#pageEvalButton').addEventListener('click', async () => {
+					pageEvalBox.querySelector('#pageEvalButton').addEventListener('click', () => {
 						eval(document.querySelector('#pageEvalBox').value);
 					});
 					container.append(pageEvalBox);
@@ -209,6 +206,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						let disableBox=document.createElement('div');
 						disableBox.innerHTML='<br><h1>Fully Disable/Enable Extensions</h1><label><input id="disableIdBox" placeholder="Extension ID Here"></label><br><button id="disableIdButton">Disable Extension</button><button id="enableIdButton">Enable Extension</button>';
 						disableBox.querySelector('#disableIdButton').addEventListener('click', () => {
+							/* Unfortunately we are still a content script, so we do have to play by Google's rules. */
 							chrome.runtime.sendMessage(chrome.runtime.id, {
 								cmd: 'disable', 
 								id: document.querySelector('#disableIdBox').value,
@@ -284,20 +282,128 @@ chrome.runtime.getBackgroundPage((background) => {
 
 						container.append(accBox);
 					}
+					if (perms.includes("manageNetworks")) {
+						let netBox=document.createElement('div');
+						netBox.innerHTML='<br><h1>Network Settings</h1><button id="bringUp">Turn Network On</button><button id="caub">Disable Auto-Updates</button><button id="uncaub">Restore Auto-Updates</button>';
+						netBox.querySelector('#bringUp').addEventListener('click', () => {
+							asPage("chrome.networkingPrivate.enableNetworkType('All');window.close();");
+						});
+						netBox.querySelector('#caub').addEventListener('click', () => {
+							if (!window.origin.includes("network")) {
+								asExt("alert('Tr3nch must be loaded on chrome://network in order to apply CAUB.');");
+								return;
+							}
+							function caub() {
+								let config={
+									"Type": "UnencryptedConfiguration",
+									"NetworkConfigurations": []
+								};
+								
+								/* Networks won't show up if wifi is off, so turn it on before continuing */
+								chrome.networkingPrivate.enableNetworkType('All');
+								chrome.networkingPrivate.getNetworks({networkType: 'WiFi'}, (networks) => {
+									/* Since networkingPrivate.setProperties can't set Metered for whatever reason,
+									we'll do it the old fashioned way. */
+									function sendWithPromise(methodName, var_args) {
+										/* Sourced from chrome://resources/cr.m.js, modified to
+										pasrse arguments for us isntead of writing it ourselves.*/
+										const args=Array.prototype.slice.call(arguments, 1);
+										const id=methodName + '_1';
+										chrome.send(methodName, [id].concat(args));
+									}
+									
+									for (let i=0; i < networks.length; i++) {
+										config.NetworkConfigurations[i]={
+											"GUID": networks[i].GUID,
+											"Metered": true,
+											"Name": networks[i].Name,
+											"Type": "WiFi",
+											"WiFi": {
+												"AutoConnect": true,
+												"SSID": networks[i].WiFi.SSID,
+												"Security": "None"
+											}
+										};
+									}
+									console.log(`Applying Chrome Automatic Update Blocker with configuration: ${JSON.stringify(config)}`);
+									sendWithPromise('importONC', config);
+								});
+							}
+							asPage(`${caub.toString()};caub();window.close();`);
+						});
+						netBox.querySelector('#uncaub').addEventListener('click', () => {
+							if (!window.origin.includes("network")) {
+								asExt("alert('Tr3nch must be loaded on chrome://network in order to remove CAUB.');");
+								return;
+							}
+							function uncaub() {
+								let config={
+									"Type": "UnencryptedConfiguration",
+									"NetworkConfigurations": []
+								};
+								
+								chrome.networkingPrivate.enableNetworkType('All');
+								chrome.networkingPrivate.getNetworks({networkType: 'WiFi'}, (networks) => {
+									function sendWithPromise(methodName, var_args) {
+										const args=Array.prototype.slice.call(arguments, 1);
+										const id=methodName + '_1';
+										chrome.send(methodName, [id].concat(args));
+									}
+									
+									for (let i=0; i < networks.length; i++) {
+										config.NetworkConfigurations[i]={
+											"GUID": networks[i].GUID,
+											"Metered": false,
+											"Name": networks[i].Name,
+											"Type": "WiFi",
+											"WiFi": {
+												"AutoConnect": true,
+												"SSID": networks[i].WiFi.SSID,
+												"Security": "None"
+											}
+										};
+									}
+									sendWithPromise('importONC', config);
+								});
+							}
+							asPage(`${uncaub.toString()};uncaub();window.close();`);
+						});
+						
+						container.append(netBox);
+					}
 					if (perms.includes("webViewProxy")) {
 						let proxyBox=document.createElement('div');
-						proxyBox.innerHTML='<br><h1>Webview Proxy Spawner</h1><label><input id="proxyUrlBox"></label><br><button id="proxyUrlButton">Launch Webview</button>';
+						proxyBox.innerHTML='<br><h1>Webview Proxy Spawner</h1><label><input id="proxyUrlBox" value="https://www.google.com/"></label><br><button id="proxyUrlButton">Launch Webview</button>';
 						proxyBox.querySelector('#proxyUrlButton').addEventListener('click', () => {
 							let proxy=window.open(window.origin, '_blank');
 							/* We can't use innerHTML cross-page because our extension's CSP only applies to this page. */
 							proxy.onload=function() {
-								document.head.innerText="";
+								proxy.document.head.innerText="";
 								
 								/* Fix problems with the OOBE */
-								document.head=document.createElement('head');
-								document.body=document.createElement('body');
+								proxy.document.head=document.createElement('head');
+								proxy.document.body=document.createElement('body');
 
-								document.body.innerHTML="";
+								proxy.document.title="Tr3nch Webview";
+								/* Insecure html injection my beloved <3 */
+								proxy.document.body.innerHTML=`
+								<div class="webviewContainer">
+									<webview allowscaling="" src="${document.querySelector('#proxyUrlBox').value}"></webview>
+								</div>
+								<style>
+									.webviewContainer{
+										width: 100%;
+										height: 100vh;
+									}
+									body{
+										margin: 0px;
+									}
+									webview, iframe{
+										height: 100%;
+										width: 100%;
+									}
+								</style>
+								`;
 							}
 						});
 
@@ -305,7 +411,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					}
 					if (perms.includes("killExtensions")) {
 						let killBox=document.createElement('div');
-						killBox.innerHTML='<br><h1>Extension LoopKiller</h1><label><input id="killIdBox" placeholder="Extension ID Here"></label><br><button id="killIdButton">LoopKill Extension</button>';
+						killBox.innerHTML='<br><h1>Extension LoopKiller</h1><label><input id="killIdBox" placeholder="Extension ID Here"></label><br><button id="killIdButton">LoopKill Extension</button><button id="resIdButton">Restart Extension</button>';
 						killBox.querySelector('#killIdButton').addEventListener('click', () => {
 							let id=document.querySelector('#killIdBox').value;
 							function disable(id) {
@@ -320,6 +426,16 @@ chrome.runtime.getBackgroundPage((background) => {
 							}
 							asPage(`${disable.toString()};disable('${id}');`);
 						});
+						killBox.querySelector('#resIdButton').addEventListener('click', () => {
+							let id=document.querySelector('#killIdBox').value;
+							function restart(id) {
+								/* We want this to work on managed extensions, so reset its configuration to kill it. */
+								chrome.developerPrivate.updateExtensionConfiguration({extensionId: id, fileAccess: false});
+								chrome.developerPrivate.updateExtensionConfiguration({extensionId: id, fileAccess: true});
+								window.close(); /* We don't want the extra page. */
+							}
+							asPage(`${restart.toString()};restart('${id}');`);
+						});
 
 						container.append(killBox);
 					}
@@ -330,7 +446,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						let unenroll=document.createElement('button');
 						unenroll.innerText="Unenroll";
 						unenroll.addEventListener('click', () => {
-							asPage("chrome.send('OauthEnrollClose');"); /* Untested */
+							asPage("chrome.send('OauthEnrollClose');window.close();"); /* Untested */
 						});
 						enrollBox.append(unenroll);
 
@@ -345,7 +461,8 @@ chrome.runtime.getBackgroundPage((background) => {
 				let mainContainer=document.querySelector('#opt-container');
 
 				if (mainContainer == null) {
-					asExt("alert('loadMenuHTML has not been implemented yet.');");
+					/* For testing */
+					asExt("alert('No GUI container was found, Tr3nch cannot be loaded in.');");
 					return;
 				}
 				mainContainer.append(loadMenuItems()); /* Create a container for all options and append them */
