@@ -205,11 +205,6 @@ chrome.runtime.getBackgroundPage((background) => {
 					Put options that DO need specific page permissions here
 					=================================================================*/
 
-					if (perms == null) {
-						asExt('alert("The page you\'re attempting to run Tr3nch on is not priveledged. Please run this on a url starting with \'chrome://\'.");');
-						return container; /* For unpriveledged pages extension permissions are still accessible, so stop only after loading them in. */
-					}
-
 					if (chrome.runtime.getManifest().permissions.includes("management")) {
 						let disableBox=document.createElement('div');
 						disableBox.innerHTML='<br><h1>Fully Disable/Enable Extensions</h1><label><input id="disableIdBox" placeholder="Extension ID Here"></label><br><button id="disableIdButton">Disable Extension</button><button id="enableIdButton">Enable Extension</button>';
@@ -230,6 +225,12 @@ chrome.runtime.getBackgroundPage((background) => {
 
 						container.append(disableBox);
 					}
+
+					if (perms == null) {
+						asExt('alert("The page you\'re attempting to run Tr3nch on is not priveledged. Please run this on a url starting with \'chrome://\'.");');
+						return container; /* For unpriveledged pages extension permissions are still accessible, so stop only after loading them in. */
+					}
+					
 					if (perms.includes("update")) {
 						let updateBox=document.createElement('div');
 						updateBox.innerHTML='<br><h1>Attempt OS Update</h1><button id="update">Update System</button>';
