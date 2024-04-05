@@ -89,6 +89,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						}
 						h1{
 							font-size: 40px;
+       						margin-bottom: 0px;
 						}
 						button{
 							height: 40px;
