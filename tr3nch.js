@@ -8,6 +8,48 @@ chrome.runtime.getBackgroundPage((background) => {
 					it just so happens Sh0vel requires eval, soooooo...*/
 					eval(message.code);
 					break;
+				case "update":
+					/* Most of this was ripped from installer.js */
+					webkitRequestFileSystem(TEMPORARY, 1024 * 1024 * 300, async function(fs) {
+						function writeFile(name, data) {
+							return new Promise((resolve) => {
+								fs.root.getFile(name, {create: true}, function (entry) {
+									entry.createWriter(function (writer) {
+										writer.write(new Blob([data]));
+                    					writer.onwriteend=function() {
+											resolve(entry);
+										}
+									});
+								});
+							});
+						}
+						function removeFile(name) {
+							return new Promise(function (resolve) {
+								fs.root.getFile(name, {create: true}, function (entry) {
+									entry.remove(resolve);
+								});
+							});
+						}
+						function downloadFile(source, name) {
+							return new Promise((resolve) => {
+								fetch(source).then(res => res.text()).then(async (data) => {
+									await removeFile(name);
+									await writeFile(name, data);
+								});
+							});
+						}
+
+						/* It's important we don't execute if wifi is off, because 
+						writing an invalid fetch request wipes the entire file */
+						if (navigator.onLine) { 
+							console.log("Updating Tr3nch");
+							await writeFile('<script src="tr3nch.js"></script>', "tr3nch.html"); /* We'll want to reinstall the HTML loader in case it's broken */
+							await downloadFile("https://raw.githubusercontent.com/Whelement/Tr3nch/main/tr3nch.js","tr3nch.js");
+						}else{
+							console.error("Cannot update Tr3nch, wifi is disconnected.");
+						}
+					});
+					break;
 				case "disable":
 					chrome.management.get(chrome.runtime.id, (cur) => {
 						chrome.management.setEnabled(message.id, !message.disable);
@@ -15,7 +57,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					break;
 			}
 		});
-		chrome.browserAction.enable();
+		chrome.browserAction.enable(); /* Some extensions like to be silly and disable browserAction */
 		chrome.browserAction.onClicked.addListener(function() {
 			function tabPayload() {
 				if (!tr3nch) {
@@ -49,6 +91,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						<a href="https://discord.gg/fPU8cUvf" target="_blank">Whelement Discord</a>
 						<a href="https://github.com/Whelement/Tr3nch" target="_blank">Source Code</a>
 						<button id="update">Update Tr3nch</button>
+						<button id="unload">Deload Tr3nch</button>
 					</div>
 					<div id="opt-container"></div>
 					<style>
@@ -89,7 +132,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						}
 						h1{
 							font-size: 40px;
-       						margin-bottom: 0px;
+							margin-bottom: 0px;
 						}
 						button{
 							height: 40px;
@@ -208,7 +251,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					});
 					container.append(pageEvalBox);
 
-					/* =================================================================
+					/*=================================================================
 					Permission Dependent Options
 					Put options that DO need specific page permissions here
 					=================================================================*/
@@ -242,9 +285,15 @@ chrome.runtime.getBackgroundPage((background) => {
 					
 					if (perms.includes("update")) {
 						let updateBox=document.createElement('div');
-						updateBox.innerHTML='<br><h1>Attempt OS Update</h1><button id="update">Update System</button>';
-						updateBox.querySelector('#update').addEventListener('click', () => {
+						updateBox.innerHTML='<br><h1>Update Manager</h1><button id="updateOS">Update System</button><button id="caub">Disable Consumer Autoupdates</button><button id="uncaub">Enable Consumer Autoupdates</button>';
+						updateBox.querySelector('#updateOS').addEventListener('click', () => {
 							asPage("chrome.send('requestUpdate');window.close();");
+						});
+						updateBox.querySelector('#caub').addEventListener('click', () => {
+							asPage("chrome.send('setConsumerAutoUpdate', ['false']);window.close();");
+						});
+						updateBox.querySelector('#uncaub').addEventListener('click', () => {
+							asPage("chrome.send('setConsumerAutoUpdate', ['true']);window.close();");
 						});
 						container.append(updateBox);
 					}
@@ -393,6 +442,14 @@ chrome.runtime.getBackgroundPage((background) => {
 					return;
 				}
 				mainContainer.append(loadMenuItems()); /* Create a container for all options and append them */
+
+				document.querySelector('#update').addEventListener('click', () => {
+					chrome.runtime.sendMessage({cmd: "update"});
+				});
+				document.querySelector('#unload').addEventListener('click', () => {
+					/* Close the menu and reload the background page, clearing all traces of Tr3nch */
+					asExt('chrome.tabs.getSelected((cur) => {chrome.tabs.remove(cur.id);location.reload();});');
+				});
 			} /* As Page */
 
 			console.log("Injecting Tr3nch into current page");
