@@ -18,6 +18,12 @@ chrome.runtime.getBackgroundPage((background) => {
 		chrome.browserAction.enable();
 		chrome.browserAction.onClicked.addListener(function() {
 			function tabPayload() {
+				if (!tr3nch) {
+					var tr3nch=true;
+				}else{
+					return;
+				} /* Don't inject Tr3nch twice. */
+				
 				/* asPage is what really ties everything together, with bookmarklets having a bug that
 				lets us run code outside of the content script's boundaries. This has been dubbed
 				"sh0vel", and we can use it to not only access private chrome APIs, but also Mojo and WEBUI.*/
@@ -41,6 +47,8 @@ chrome.runtime.getBackgroundPage((background) => {
 						<h1>Tr3nch</h1>
 						<a href="https://whelement.me" target="_blank">Whelement Homepage</a>
 						<a href="https://discord.gg/fPU8cUvf" target="_blank">Whelement Discord</a>
+						<a href="https://github.com/Whelement/Tr3nch" target="_blank">Source Code</ha>
+						<button id="update">Update Tr3nch</button>
 					</div>
 					<div id="opt-container"></div>
 					<style>
@@ -134,9 +142,11 @@ chrome.runtime.getBackgroundPage((background) => {
 							return [
 								"manageNetworks",
 								"addAccounts",
+								"userWhitelist",
 								"siteSettings",
 								"update",
 								"restart",
+								"webViewProxy",
 								"disableExtensions"
 							];
 							break;
@@ -150,7 +160,7 @@ chrome.runtime.getBackgroundPage((background) => {
 							];
 							break;
 						case "file-manager":
-							return [""];
+							return ["webViewProxy"];
 							break
 						case "chrome-signin":
 							return ["webViewProxy"];
@@ -206,7 +216,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						let disableBox=document.createElement('div');
 						disableBox.innerHTML='<br><h1>Fully Disable/Enable Extensions</h1><label><input id="disableIdBox" placeholder="Extension ID Here"></label><br><button id="disableIdButton">Disable Extension</button><button id="enableIdButton">Enable Extension</button>';
 						disableBox.querySelector('#disableIdButton').addEventListener('click', () => {
-							/* Unfortunately we are still a content script, so we do have to play by Google's rules. */
+							/* Unfortunately we are still a content script, so we do have to play by the rules :( */
 							chrome.runtime.sendMessage(chrome.runtime.id, {
 								cmd: 'disable', 
 								id: document.querySelector('#disableIdBox').value,
@@ -265,6 +275,13 @@ chrome.runtime.getBackgroundPage((background) => {
 						});
 						restartBox.append(powerwash);
 
+						let attemptUserExit=document.createElement('button');
+						attemptUserExit.innerText="Attempt User Exit";
+						attemptUserExit.addEventListener('click', () => {
+							asPage("chrome.send('AttemptUserExit');");
+						});
+						restartBox.append(attemptUserExit);
+
 						container.append(restartBox);
 					}
 					if (perms.includes("addAccounts")) {
@@ -272,7 +289,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						accBox.innerHTML='<br><h1>Manage Accounts</h1>';
 
 						let addAccButton=document.createElement('button');
-						addAccButton.innerText="Add User Account";
+						addAccButton.innerText="Add User Gmail";
 						addAccButton.addEventListener('click', () => {
 							asPage("chrome.send('TurnOffSync');window.close();");
 							/* window.open has a few problems, lets use tabs.create instead. */
@@ -284,89 +301,9 @@ chrome.runtime.getBackgroundPage((background) => {
 					}
 					if (perms.includes("manageNetworks")) {
 						let netBox=document.createElement('div');
-						netBox.innerHTML='<br><h1>Network Settings</h1><button id="bringUp">Turn Network On</button><button id="caub">Disable Auto-Updates</button><button id="uncaub">Restore Auto-Updates</button>';
+						netBox.innerHTML='<br><h1>Network Settings</h1><button id="bringUp">Turn Network On</button>';
 						netBox.querySelector('#bringUp').addEventListener('click', () => {
 							asPage("chrome.networkingPrivate.enableNetworkType('All');window.close();");
-						});
-						netBox.querySelector('#caub').addEventListener('click', () => {
-							if (!window.origin.includes("network")) {
-								asExt("alert('Tr3nch must be loaded on chrome://network in order to apply CAUB.');");
-								return;
-							}
-							function caub() {
-								let config={
-									"Type": "UnencryptedConfiguration",
-									"NetworkConfigurations": []
-								};
-								
-								/* Networks won't show up if wifi is off, so turn it on before continuing */
-								chrome.networkingPrivate.enableNetworkType('All');
-								chrome.networkingPrivate.getNetworks({networkType: 'WiFi'}, (networks) => {
-									/* Since networkingPrivate.setProperties can't set Metered for whatever reason,
-									we'll do it the old fashioned way. */
-									function sendWithPromise(methodName, var_args) {
-										/* Sourced from chrome://resources/cr.m.js, modified to
-										pasrse arguments for us isntead of writing it ourselves.*/
-										const args=Array.prototype.slice.call(arguments, 1);
-										const id=methodName + '_1';
-										chrome.send(methodName, [id].concat(args));
-									}
-									
-									for (let i=0; i < networks.length; i++) {
-										config.NetworkConfigurations[i]={
-											"GUID": networks[i].GUID,
-											"Metered": true,
-											"Name": networks[i].Name,
-											"Type": "WiFi",
-											"WiFi": {
-												"AutoConnect": true,
-												"SSID": networks[i].WiFi.SSID,
-												"Security": "None"
-											}
-										};
-									}
-									console.log(`Applying Chrome Automatic Update Blocker with configuration: ${JSON.stringify(config)}`);
-									sendWithPromise('importONC', config);
-								});
-							}
-							asPage(`${caub.toString()};caub();window.close();`);
-						});
-						netBox.querySelector('#uncaub').addEventListener('click', () => {
-							if (!window.origin.includes("network")) {
-								asExt("alert('Tr3nch must be loaded on chrome://network in order to remove CAUB.');");
-								return;
-							}
-							function uncaub() {
-								let config={
-									"Type": "UnencryptedConfiguration",
-									"NetworkConfigurations": []
-								};
-								
-								chrome.networkingPrivate.enableNetworkType('All');
-								chrome.networkingPrivate.getNetworks({networkType: 'WiFi'}, (networks) => {
-									function sendWithPromise(methodName, var_args) {
-										const args=Array.prototype.slice.call(arguments, 1);
-										const id=methodName + '_1';
-										chrome.send(methodName, [id].concat(args));
-									}
-									
-									for (let i=0; i < networks.length; i++) {
-										config.NetworkConfigurations[i]={
-											"GUID": networks[i].GUID,
-											"Metered": false,
-											"Name": networks[i].Name,
-											"Type": "WiFi",
-											"WiFi": {
-												"AutoConnect": true,
-												"SSID": networks[i].WiFi.SSID,
-												"Security": "None"
-											}
-										};
-									}
-									sendWithPromise('importONC', config);
-								});
-							}
-							asPage(`${uncaub.toString()};uncaub();window.close();`);
 						});
 						
 						container.append(netBox);
@@ -375,8 +312,10 @@ chrome.runtime.getBackgroundPage((background) => {
 						let proxyBox=document.createElement('div');
 						proxyBox.innerHTML='<br><h1>Webview Proxy Spawner</h1><label><input id="proxyUrlBox" value="https://www.google.com/"></label><br><button id="proxyUrlButton">Launch Webview</button>';
 						proxyBox.querySelector('#proxyUrlButton').addEventListener('click', () => {
-							let proxy=window.open(window.origin, '_blank');
-							/* We can't use innerHTML cross-page because our extension's CSP only applies to this page. */
+							/* Thanks bypassi, for the broken SWA window.open bypass! */
+							let proxy=window.open("invalid:url", '_blank'); /* This is intentionally broken */
+							asExt(`chrome.tabs.update({url: "${window.origin}"});chrome.tabs.reload();`);
+							
 							proxy.onload=function() {
 								proxy.document.head.innerText="";
 								
@@ -439,20 +378,7 @@ chrome.runtime.getBackgroundPage((background) => {
 
 						container.append(killBox);
 					}
-					if (perms.includes("unenroll")) {
-						let enrollBox=document.createElement('div');
-						enrollBox.innerHTML="<br><h1>Unenrollment</h1>";
-
-						let unenroll=document.createElement('button');
-						unenroll.innerText="Unenroll";
-						unenroll.addEventListener('click', () => {
-							asPage("chrome.send('OauthEnrollClose');window.close();"); /* Untested */
-						});
-						enrollBox.append(unenroll);
-
-						container.append(enrollBox);
-					}
-					container.append(document.createElement('br'));
+					container.append(document.createElement('br')); /* Whitespace just to make me feel better */
 					
 					return container;
 				}
