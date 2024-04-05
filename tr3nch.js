@@ -47,7 +47,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						<h1>Tr3nch</h1>
 						<a href="https://whelement.me" target="_blank">Whelement Homepage</a>
 						<a href="https://discord.gg/fPU8cUvf" target="_blank">Whelement Discord</a>
-						<a href="https://github.com/Whelement/Tr3nch" target="_blank">Source Code</ha>
+						<a href="https://github.com/Whelement/Tr3nch" target="_blank">Source Code</a>
 						<button id="update">Update Tr3nch</button>
 					</div>
 					<div id="opt-container"></div>
