@@ -2,17 +2,20 @@
 Tr3nch is an exploit allowing you to open a menu on various "chrome urls" to perform
 various actions that a normal extension is not capable of doing, and is kind of like
 the spiritual successor to the "Swamp ULTRA" exploit due to its behaviour and the
-fact that goguardian users are garunteed to be able to do this. It utilizes a bug
+fact that goguardian users are guarunteed to be able to do this. It utilizes a bug
 in chrome urls to allow for code execution with access to the chrome API (this bug
 has been dubbed "Sh0vel") and abuses this bug to do a number of things, including:
 - Adding gmails regardless of policy
 - Open a webview proxy invisible to some filters
-- Edit network settings for any network (includes a metered toggle)
-- Disable extensions
-- Run code on the chrome url and extension
-- Update the device regardless of caub
+- Edit network settings for any network
+- Loopkill/Disable extensions
+- Run code on the page and extension with API access
+- Update the device and pause/resume automatic updates
 
 And more.
+
+It is very unlikely that this exploit will ever be patched, as it entirely revolves around Sh0vel, which itself entirely revolves around the extensions-on-chrome-urls flag, and is technically just an automated version of the Point-Blank exploit, which Google also did not patch (unless you count the R115 bookmarklet restrictions) due to it being technically intended behaviour.
+However, Google has patched Skiovox in ChromeOS release R121, breaking the setup chain. While it possible to downgrade to R120 currently to set it up, it is likely you won't be able to do this forever. The only part that matters is that you have code execution in an extension and it runs the contents of installer.js, wether you do that through DNS spoofing, XSS, or something else does not matter.
 
 ### Setup
 ---
@@ -31,7 +34,9 @@ Make sure you've gone through the setup on an extension beforehand.
 - Now that Tr3nch is loaded in, go to any chrome URL. Different URLs have different permissions, so some will have different options than others. The most powerful are typically "chrome://settings", "chrome://os-settings", "chrome://file-manager", "chrome://chrome-signin", "chrome://extensions", and "chrome://network". If the url opens a new window when opening instead of opening as a normal tab, it needs to open normally. This can be forced by opening the bookmark you made for skiovox breakout (not the one you made for Tr3nch), then in the textbox pasting `chrome.tabs.create({}, () => {chrome.tabs.update({url: "chrome://whatever-url-you-chose"});});`, and it should open as a normal page.
 - Once you're on the page, find your extension in the top right corner of the browser (it might be hidden in the extension menu, click the puzzle piece menu to find it) and click the icon of the extension you loaded Tr3nch on.
 - Assuming you did everything correctly, the Tr3nch menu should load in. From here you can mess around with the menu options, run code in a bunch of places, and unload Tr3nch instantly if needed.
-- It is highly recommended that you update Tr3nch every once in a while, as the menu may be often updated with new features and exploits that may not have been implemented when you installed it. There's an option to update Tr3nch at the very top of the menu once it's loaded in, just make sure you're connected to wifi and it will automatically set things up for you. 
+
+It is highly recommended that you update Tr3nch every once in a while, as the menu may be often updated with new features and exploits that may not have been implemented when you installed it. There's an option to update Tr3nch at the very top of the menu once it's loaded in, just make sure you're connected to wifi and it will automatically set things up for you. 
+There is also a button for unloading Tr3nch, right next to the update switch. This will instantly close the current Tr3nch window and unload Tr3nch from the extension, bringing it back to normal.
 
 ### Credits
 - Zeglol1234: The general idea, Main developer
