@@ -1,16 +1,16 @@
 # Tr3nch
 Tr3nch is an exploit allowing you to open a menu on various "chrome urls" to perform
-various actions that a normal extension is not capable of doing. It utilizes a bug
+various actions that a normal extension is not capable of doing, and is kind of like
+the spiritual successor to the "Swamp ULTRA" exploit due to its behaviour and the
+fact that goguardian users are garunteed to be able to do this. It utilizes a bug
 in chrome urls to allow for code execution with access to the chrome API (this bug
 has been dubbed "Sh0vel") and abuses this bug to do a number of things, including:
 - Adding gmails regardless of policy
 - Open a webview proxy invisible to some filters
 - Edit network settings for any network (includes a metered toggle)
-- Edit site settings for any page
 - Disable extensions
 - Run code on the chrome url and extension
 - Update the device regardless of caub
-- Unenroll! (ONLY FOR PEOPLE WHO CAN DOWNGRADE TO R111, NOT TESTED YET!)
 
 And more.
 
@@ -30,4 +30,13 @@ Make sure you've gone through the setup on an extension beforehand.
 - The page should close instantly, this is normal.
 - Now that Tr3nch is loaded in, go to any chrome URL. Different URLs have different permissions, so some will have different options than others. The most powerful are typically "chrome://settings", "chrome://os-settings", "chrome://file-manager", "chrome://chrome-signin", "chrome://extensions", and "chrome://network". If the url opens a new window when opening instead of opening as a normal tab, it needs to open normally. This can be forced by opening the bookmark you made for skiovox breakout (not the one you made for Tr3nch), then in the textbox pasting `chrome.tabs.create({}, () => {chrome.tabs.update({url: "chrome://whatever-url-you-chose"});});`, and it should open as a normal page.
 - Once you're on the page, find your extension in the top right corner of the browser (it might be hidden in the extension menu, click the puzzle piece menu to find it) and click the icon of the extension you loaded Tr3nch on.
-- Assuming you did everything correctly, the Tr3nch menu should load in.
+- Assuming you did everything correctly, the Tr3nch menu should load in. From here you can mess around with the menu options, run code in a bunch of places, and unload Tr3nch instantly if needed.
+- It is highly recommended that you update Tr3nch every once in a while, as the menu may be often updated with new features and exploits that may not have been implemented when you installed it. There's an option to update Tr3nch at the very top of the menu once it's loaded in, just make sure you're connected to wifi and it will automatically set things up for you. 
+
+### Credits
+- Zeglol1234: The general idea, Main developer
+- Writable: Assistance with Sh0vel and code from skiovox-breakout
+- Kelsea: Making the logo
+- Kxtz: Misc development & Testing
+- Boeing: Misc development & Testing
+- Katie: Testing
