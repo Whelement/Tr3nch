@@ -255,7 +255,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					Permission Dependent Options
 					Put options that DO need specific page permissions here
 					=================================================================*/
-
+					
 					if (chrome.runtime.getManifest().permissions.includes("management")) {
 						let disableBox=document.createElement('div');
 						disableBox.innerHTML='<br><h1>Fully Disable/Enable Extensions</h1><label><input id="disableIdBox" placeholder="Extension ID Here"></label><br><button id="disableIdButton">Disable Extension</button><button id="enableIdButton">Enable Extension</button>';
@@ -444,7 +444,7 @@ chrome.runtime.getBackgroundPage((background) => {
 				mainContainer.append(loadMenuItems()); /* Create a container for all options and append them */
 
 				document.querySelector('#update').addEventListener('click', () => {
-					chrome.runtime.sendMessage({cmd: "update"});
+					chrome.runtime.sendMessage(chrome.runtime.id, {cmd: "update"});
 				});
 				document.querySelector('#unload').addEventListener('click', () => {
 					/* Close the menu and reload the background page, clearing all traces of Tr3nch */
@@ -453,12 +453,20 @@ chrome.runtime.getBackgroundPage((background) => {
 			} /* As Page */
 
 			console.log("Injecting Tr3nch into current page");
-			
-			/* I would LOVE to use MV3's function injection capabilities, but because Sh0vel relies entirely on MV2,
-			we can't do that, so let's do it my way. */
-			chrome.tabs.executeScript(null, {code: `${tabPayload.toString()};tabPayload();`});
-			/* If you're wondering why I reiterated tabPayload() at the end, it's because the 
-			.toString() method in this case only defines the function in the page, it still needs to be called manually. */
+
+			chrome.tabs.getSelected((cur) => {
+				if (cur.url.includes("webstore")) {
+					alert("Tr3nch cannot operate on the chrome webstore.");
+					/* For those curious why, tabs.executeScript has a special case where it will
+					refuse to run on the webstore, making Tr3nch impossible to inject into it. */
+					return;
+				}
+				/* I would LOVE to use MV3's function injection capabilities, but because Sh0vel relies entirely on MV2,
+				we can't do that, so let's do it my way. */
+				chrome.tabs.executeScript(null, {code: `${tabPayload.toString()};tabPayload();`}); /* cur.id over null seems to be buggy */
+				/* If you're wondering why I reiterated tabPayload() at the end, it's because the 
+				.toString() method in this case only defines the function in the page, it still needs to be called manually. */
+			});
 		}); /* On Clicked */
 	} /* As Background Page */
 
