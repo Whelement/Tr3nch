@@ -50,9 +50,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					});
 					break;
 				case "disable":
-					chrome.management.get(chrome.runtime.id, (cur) => {
-						chrome.management.setEnabled(message.id, !message.disable);
-					});
+					chrome.management.setEnabled(message.id, !message.disable);
 					break;
 			}
 		});
