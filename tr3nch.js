@@ -633,6 +633,10 @@ chrome.runtime.getBackgroundPage((background) => {
 					refuse to run on the webstore, making Tr3nch impossible to inject into it. */
 					return;
 				}
+				if (cur.url.includes("chrome-untrusted:")) {
+					alert("Tr3nch cannot be injected into urls with the 'chrome-untrusted:' protocol.");
+					return;
+				}
 				/* I would LOVE to use MV3's function injection capabilities, but because Sh0vel relies entirely on MV2,
 				we can't do that, so let's do it my way. */
 				chrome.tabs.executeScript(null, {code: `${tabPayload.toString()};tabPayload();`}); /* cur.id over null seems to be buggy */
