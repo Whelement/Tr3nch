@@ -1,6 +1,5 @@
 chrome.runtime.getBackgroundPage((background) => {
 	function payload() {
-		console.log('Tr3nch injected into current extension.');
 		chrome.runtime.onMessage.addListener(function(message) {
 			switch(message.cmd) {
 				case "runCode":
@@ -94,6 +93,21 @@ chrome.runtime.getBackgroundPage((background) => {
 						<button id="unload">Deload Tr3nch</button>
 					</div>
 					<div id="opt-container"></div>
+					<div class="credits">
+						<h1>Credits</h1>
+						<p1>Developed and brought to you by Whelement.</p1>
+						<p>
+							Zeglol1234: The idea, main developer<br>
+							Writable: Skiovox Breakout implementations (Not affiliated with this project directly)<br>
+							Bypassi: Add gmails exploit (Not affiliated with this project directly)<br>
+							Boeing: Misc development and testing<br>
+							Kxtz: Misc development and testing<br>
+							Archimax: GUI inspiration<br>
+							Kelsea: The logo<br>
+							Katie: Testing<br>
+							The rest of Whelement: Mental support<br>
+						</p>
+					</div>
 					<style>
 						body{
 							margin: 0px;
@@ -105,6 +119,12 @@ chrome.runtime.getBackgroundPage((background) => {
 						.topBar{
 							width: 100%;
 							height: 100px;
+							background-color: #2c3e50;
+							text-align: center;
+						}
+						.credits{
+							width: 100%;
+							height: 250px;
 							background-color: #2c3e50;
 							text-align: center;
 						}
@@ -131,8 +151,13 @@ chrome.runtime.getBackgroundPage((background) => {
 							border: 3px solid white;
 						}
 						h1{
+							cursor: default;
 							font-size: 40px;
+							font-weight: bold;
 							margin-bottom: 0px;
+						}
+						hr{
+							width: 750px;
 						}
 						button{
 							height: 40px;
@@ -147,6 +172,15 @@ chrome.runtime.getBackgroundPage((background) => {
 						button:hover{
 							cursor: pointer;
 							background-color: #1d2936;
+						}
+						p{
+							cursor: default;
+							color: white;
+						}
+						p1{
+							cursor: default;
+							font-size: 17px;
+							font-weight: bold;
 						}
 						a{
 							font-weight: bold;
@@ -186,7 +220,6 @@ chrome.runtime.getBackgroundPage((background) => {
 							return [
 								"manageNetworks",
 								"addAccounts",
-								"userWhitelist",
 								"siteSettings",
 								"update",
 								"restart",
@@ -204,13 +237,19 @@ chrome.runtime.getBackgroundPage((background) => {
 							];
 							break;
 						case "file-manager":
-							return ["webViewProxy"];
+							return [
+								"webViewProxy",
+								"files"
+							];
 							break
 						case "chrome-signin":
 							return ["webViewProxy"];
 							break;
 						case "network":
 							return ["manageNetworks"];
+							break;
+						case "policy":
+							return ["policies"];
 							break;
 						default:
 							/* If a page isn't here, its permissions are not considered useful. */
@@ -231,21 +270,45 @@ chrome.runtime.getBackgroundPage((background) => {
 					
 					let extEvalBox=document.createElement('div');
 					/* We can use innerHTML because we inherit the CSP from our extension */
-					extEvalBox.innerHTML='<br><h1>Run Code As Background Page</h1><textarea id="extEvalBox"></textarea><br><button id="extEvalButton">Run as Background</button>';
+					extEvalBox.innerHTML=`
+					<br>
+					<h1>Run Code As Background Page</h1>
+					<hr>
+					<p>Run code directly as the background page of the extension Tr3nch is injected into</p>
+					<textarea id="extEvalBox"></textarea>
+					<br>
+					<button id="extEvalButton">Run as Background</button>
+					`;
 					extEvalBox.querySelector('#extEvalButton').addEventListener('click', () => {
 						asExt(document.querySelector('#extEvalBox').value);
 					});
 					container.append(extEvalBox);
 
 					let pbEvalBox=document.createElement('div');
-					pbEvalBox.innerHTML='<br><h1>Run Code As Sh0vel</h1><textarea id="pbEvalBox"></textarea><br><button id="pbEvalButton">Run as Sh0vel</button>';
+					pbEvalBox.innerHTML=`
+					<br>
+					<h1>Run Code As Sh0vel</h1>
+					<hr>
+					<p>Run code with direct access to this page's chrome API via Sh0vel. Access this page's DOM with window.opener.</p>
+					<textarea id="pbEvalBox"></textarea>
+					<br>
+					<button id="pbEvalButton">Run as Sh0vel</button>
+					`;
 					pbEvalBox.querySelector('#pbEvalButton').addEventListener('click', () => {
 						asPage(document.querySelector('#pbEvalBox').value);
 					});
 					container.append(pbEvalBox);
 
 					let pageEvalBox=document.createElement('div');
-					pageEvalBox.innerHTML='<br><h1>Run Code On This Page</h1><textarea id="pageEvalBox"></textarea><br><button id="pageEvalButton">Run as Page</button>';
+					pageEvalBox.innerHTML=`
+					<br>
+					<h1>Run Code On This Page</h1>
+					<hr>
+					<p>Run code directly as this content script without chrome API access.</p>
+					<textarea id="pageEvalBox"></textarea>
+					<br>
+					<button id="pageEvalButton">Run as Page</button>
+					`;
 					pageEvalBox.querySelector('#pageEvalButton').addEventListener('click', () => {
 						eval(document.querySelector('#pageEvalBox').value);
 					});
@@ -258,7 +321,18 @@ chrome.runtime.getBackgroundPage((background) => {
 					
 					if (chrome.runtime.getManifest().permissions.includes("management")) {
 						let disableBox=document.createElement('div');
-						disableBox.innerHTML='<br><h1>Fully Disable/Enable Extensions</h1><label><input id="disableIdBox" placeholder="Extension ID Here"></label><br><button id="disableIdButton">Disable Extension</button><button id="enableIdButton">Enable Extension</button>';
+						disableBox.innerHTML=`
+						<br>
+						<h1>Fully Disable/Enable Extensions</h1>
+						<hr>
+						<p>Fully disable/enable any extension by its ID.</p>
+						<label>
+							<input id="disableIdBox" placeholder="Extension ID Here">
+						</label>
+						<br>
+						<button id="disableIdButton">Disable Extension</button>
+						<button id="enableIdButton">Enable Extension</button>
+						`;
 						disableBox.querySelector('#disableIdButton').addEventListener('click', () => {
 							/* Unfortunately we are still a content script, so we do have to play by the rules :( */
 							chrome.runtime.sendMessage(chrome.runtime.id, {
@@ -285,7 +359,15 @@ chrome.runtime.getBackgroundPage((background) => {
 					
 					if (perms.includes("update")) {
 						let updateBox=document.createElement('div');
-						updateBox.innerHTML='<br><h1>Update Manager</h1><button id="updateOS">Update System</button><button id="caub">Disable Consumer Autoupdates</button><button id="uncaub">Enable Consumer Autoupdates</button>';
+						updateBox.innerHTML=`
+						<br>
+						<h1>Update Manager</h1>
+						<hr>
+						<p>Force, Disable, and Enable automatic updates for the OS.</p>
+						<button id="updateOS">Update System</button>
+						<button id="caub">Disable Consumer Autoupdates</button>
+						<button id="uncaub">Enable Consumer Autoupdates</button>
+						`;
 						updateBox.querySelector('#updateOS').addEventListener('click', () => {
 							asPage("chrome.send('requestUpdate');window.close();");
 						});
@@ -299,7 +381,12 @@ chrome.runtime.getBackgroundPage((background) => {
 					}
 					if (perms.includes("restart")) {
 						let restartBox=document.createElement('div');
-						restartBox.innerHTML='<br><h1>User Session Management</h1>';
+						restartBox.innerHTML=`
+						<br>
+						<h1>User Session Management</h1>
+						<hr>
+						<p>Reset, exit, or wipe the current user session.</p>
+						`;
 
 						let restart=document.createElement('button');
 						restart.innerText="Restart Chrome";
@@ -334,9 +421,30 @@ chrome.runtime.getBackgroundPage((background) => {
 
 						container.append(restartBox);
 					}
+					if (perms.includes("files")) {
+						let fileBox=document.createElement('div');
+						fileBox.innerHTML=`
+						<br>
+						<h1>Misc Options</h1>
+						<hr>
+						<p>Various options for the fileManagerPrivate permission.</p>
+						<button id="reauth">Signout and Reauthenticate</button>
+						`; /* More options to be added soon hopefully, otherwise ill just make a "random" section. */
+						
+						fileBox.querySelector('#reauth').addEventListener('click', () => {
+							asPage("chrome.fileManagerPrivate.logoutUserForReauthentication();");
+						});
+						
+						container.append(fileBox);
+					}
 					if (perms.includes("addAccounts")) {
 						let accBox=document.createElement('div');
-						accBox.innerHTML='<br><h1>Manage Accounts</h1>';
+						accBox.innerHTML=`
+						<br>
+						<h1>Manage Accounts</h1>
+						<hr>
+						<p>Mess around with profiles on the current user session.</p>
+						`;
 
 						let addAccButton=document.createElement('button');
 						addAccButton.innerText="Add User Gmail";
@@ -347,20 +455,73 @@ chrome.runtime.getBackgroundPage((background) => {
 						});
 						accBox.append(addAccButton);
 
+						let addProfile=document.createElement('button');
+						addProfile.innerText="Add Profile Dialog";
+						addProfile.addEventListener('click', () => {
+							asPage("chrome.send('addAccount');window.close();");
+						});
+						accBox.append(addProfile);
+
 						container.append(accBox);
+					}
+					if (perms.includes("policies")) {
+						let policyBox=document.createElement('div');
+						policyBox.innerHTML=`
+						<br>
+						<h1>Policies</h1>
+						<hr>
+						<p>Sync and export policies.</p>
+						<button id="relPolicy">Policy Sync</button>
+						<button id="exPolicy">Export Policies</button>
+						`;
+
+						policyBox.querySelector('#relPolicy').addEventListener('click', () => {
+							asPage("chrome.send('reloadPolicies');window.close();");
+						});
+						policyBox.querySelector('#exPolicy').addEventListener('click', () => {
+							asPage("chrome.send('exportPoliciesJSON');window.close();");
+						});
+
+						container.append(policyBox);
 					}
 					if (perms.includes("manageNetworks")) {
 						let netBox=document.createElement('div');
-						netBox.innerHTML='<br><h1>Network Settings</h1><button id="bringUp">Turn Network On</button>';
+						netBox.innerHTML=`
+						<br>
+						<h1>Network Settings</h1>
+						<hr>
+						<p>Mess around with internet settings.</p>
+						<button id="bringUp">Turn Network On</button>
+						`;
 						netBox.querySelector('#bringUp').addEventListener('click', () => {
 							asPage("chrome.networkingPrivate.enableNetworkType('All');window.close();");
 						});
+
+						if (window.origin.includes("settings")) {
+							let diag=document.createElement('button');
+							diag.innerText="Open Diagnostics";
+							diag.addEventListener('click', () => {
+								asPage("chrome.send('openDiagnostics');window.close();");
+							});
+
+							netBox.append(diag);
+						}
 						
 						container.append(netBox);
 					}
 					if (perms.includes("webViewProxy")) {
 						let proxyBox=document.createElement('div');
-						proxyBox.innerHTML='<br><h1>Webview Proxy Spawner</h1><label><input id="proxyUrlBox" value="https://www.google.com/"></label><br><button id="proxyUrlButton">Launch Webview</button>';
+						proxyBox.innerHTML=`
+						<br>
+						<h1>Webview Proxy Spawner</h1>
+						<hr>
+						<p>Open an unblocked webview tab invisible to some filters.</p>
+						<label>
+							<input id="proxyUrlBox" value="https://www.google.com/">
+						</label>
+						<br>
+						<button id="proxyUrlButton">Launch Webview</button>
+						`;
 						proxyBox.querySelector('#proxyUrlButton').addEventListener('click', () => {
 							/* Thanks bypassi, for the broken SWA window.open bypass! */
 							let proxy=window.open("invalid:url", '_blank'); /* This is intentionally broken */
@@ -400,7 +561,18 @@ chrome.runtime.getBackgroundPage((background) => {
 					}
 					if (perms.includes("killExtensions")) {
 						let killBox=document.createElement('div');
-						killBox.innerHTML='<br><h1>Extension LoopKiller</h1><label><input id="killIdBox" placeholder="Extension ID Here"></label><br><button id="killIdButton">LoopKill Extension</button><button id="resIdButton">Restart Extension</button>';
+						killBox.innerHTML=`
+						<br>
+						<h1>Extension LoopKiller</h1>
+						<hr>
+						<p>Restart or Repeatedly kill an extension by its ID.</p>
+						<label>
+							<input id="killIdBox" placeholder="Extension ID Here">
+						</label>
+						<br>
+						<button id="killIdButton">LoopKill Extension</button>
+						<button id="resIdButton">Restart Extension</button>
+						`;
 						killBox.querySelector('#killIdButton').addEventListener('click', () => {
 							let id=document.querySelector('#killIdBox').value;
 							function disable(id) {
@@ -468,6 +640,8 @@ chrome.runtime.getBackgroundPage((background) => {
 				.toString() method in this case only defines the function in the page, it still needs to be called manually. */
 			});
 		}); /* On Clicked */
+		
+		console.log('Tr3nch injected into current extension.');
 	} /* As Background Page */
 
 	let manifest=chrome.runtime.getManifest();
