@@ -320,6 +320,33 @@ chrome.runtime.getBackgroundPage((background) => {
 					});
 					container.append(pageEvalBox);
 
+					let redirBox=document.createElement('div');
+					redirBox.innerHTML=`
+					<br>
+					<h1>Quick Navigate</h1>
+					<hr>
+					<p>Quickly redirect to various URLs to run Tr3nch on.</p>
+					<br>
+					`;
+					function addPage(page) {
+						let redir=document.createElement('button');
+						redir.innerText=page.replace("chrome://","");
+						/* I have no clue why asExt is undefined in the Function statement here, so we'll just manually send the message. */
+						redir.addEventListener('click', Function(`chrome.runtime.sendMessage(chrome.runtime.id, {cmd: "runCode", code: "chrome.tabs.create({}, () => {chrome.tabs.update({url: '${page}'});});"});`));
+						redirBox.append(redir);
+					}
+					addPage('chrome://extensions');
+					addPage('chrome://os-settings');
+					addPage('chrome://settings');
+					addPage('chrome://file-manager');
+					addPage('chrome://chrome-signin');
+					addPage('chrome://flags');
+					addPage('chrome://network');
+					addPage('chrome://policy');
+					/*addPage('chrome://oobe'); OOBE isn't available in user sessions. */
+					
+					container.append(redirBox);
+
 					/*=================================================================
 					Permission Dependent Options
 					Put options that DO need specific page permissions here
