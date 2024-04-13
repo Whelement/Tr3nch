@@ -42,8 +42,10 @@ chrome.runtime.getBackgroundPage((background) => {
 						writing an invalid fetch request wipes the entire file */
 						if (navigator.onLine) { 
 							console.log("Updating Tr3nch");
-							await writeFile('<script src="tr3nch.js"></script>', "tr3nch.html"); /* We'll want to reinstall the HTML loader in case it's broken */
+							let src=await writeFile('<script src="tr3nch.js"></script>', "tr3nch.html"); /* We'll want to reinstall the HTML loader in case it's broken */
 							await downloadFile("https://raw.githubusercontent.com/Whelement/Tr3nch/main/tr3nch.js","tr3nch.js");
+
+							console.log("Successfully updated Tr3nch. Save this page in your bookmarks if you haven't already:" + src);
 						}else{
 							console.error("Cannot update Tr3nch, wifi is disconnected.");
 						}
@@ -241,13 +243,19 @@ chrome.runtime.getBackgroundPage((background) => {
 							];
 							break
 						case "chrome-signin":
-							return ["webViewProxy"];
+							return [
+								"webViewProxy",
+								"signin"
+							];
 							break;
 						case "network":
 							return ["manageNetworks"];
 							break;
 						case "policy":
 							return ["policies"];
+							break;
+						case "flags":
+							return ["flags"];
 							break;
 						default:
 							/* If a page isn't here, its permissions are not considered useful. */
@@ -324,6 +332,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						<h1>Fully Disable/Enable Extensions</h1>
 						<hr>
 						<p>Fully disable/enable any extension by its ID.</p>
+						<br>
 						<label>
 							<input id="disableIdBox" placeholder="Extension ID Here">
 						</label>
@@ -427,13 +436,34 @@ chrome.runtime.getBackgroundPage((background) => {
 						<hr>
 						<p>Various options for the fileManagerPrivate permission.</p>
 						<button id="reauth">Signout and Reauthenticate</button>
+						<button id="devtools">Open Inspector</button>
 						`; /* More options to be added soon hopefully, otherwise ill just make a "random" section. */
 						
 						fileBox.querySelector('#reauth').addEventListener('click', () => {
-							asPage("chrome.fileManagerPrivate.logoutUserForReauthentication();");
+							asPage("chrome.fileManagerPrivate.logoutUserForReauthentication();window.close();");
+						});
+						
+						fileBox.querySelector('#devtools').addEventListener('click', () => {
+							asPage("chrome.fileManagerPrivate.openInspector('console');window.close();");
 						});
 						
 						container.append(fileBox);
+					}
+					if (perms.includes("signin")) {
+						let signinBox=document.createElement('div');
+						signinBox.innerHTML=`
+						<br>
+						<h1>SignIn Options</h1>
+						<hr>
+						<p>Various options for the chrome-signin page.</p>
+						<button id="incog">Open Incognito</button>
+						`;
+
+						signinBox.querySelector('#incog').addEventListener('click', () => {
+							asPage('chrome.send("showIncognito");window.close();');
+						});
+
+						container.append(signinBox);
 					}
 					if (perms.includes("addAccounts")) {
 						let accBox=document.createElement('div');
@@ -461,6 +491,28 @@ chrome.runtime.getBackgroundPage((background) => {
 						accBox.append(addProfile);
 
 						container.append(accBox);
+					}
+					if (perms.includes("flags")) {
+						let flagBox=document.createElement('div');
+						flagBox.innerHTML=`
+						<br>
+						<h1>Manage Flags</h1>
+						<hr>
+						<p>Tamper with unstable OS features and restart.</p>
+						<label>
+							<input type="text" id="flagBox" placeholder="Place your flag name here" value="borealis-enabled@1">
+						</label>
+						<button id="enableFlag">Enable Flag</button>
+						<button id="restartBrowser">Restart User Session</button>
+						`;
+						flagBox.querySelector('#enableFlag').addEventListener('click', () => {
+							asPage(`chrome.send('enableExperimentalFeature', ['${document.querySelector("#flagBox").value}','true']);window.close();`);
+						});
+						flagBox.querySelector('#restartBrowser').addEventListener('click', () => {
+							asPage('chrome.send("restartBrowser");window.close();');
+						});
+
+						container.append(flagBox);
 					}
 					if (perms.includes("policies")) {
 						let policyBox=document.createElement('div');
