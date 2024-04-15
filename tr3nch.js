@@ -463,7 +463,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						<hr>
 						<p>Various options for the fileManagerPrivate permission.</p>
 						<button id="reauth">Signout and Reauthenticate</button>
-						<button id="devtools">Open Inspector</button>
+						<button id="devtools">(EXPERIMENTAL) Open Inspector</button>
 						`; /* More options to be added soon hopefully, otherwise ill just make a "random" section. */
 						
 						fileBox.querySelector('#reauth').addEventListener('click', () => {
@@ -483,7 +483,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						<h1>SignIn Options</h1>
 						<hr>
 						<p>Various options for the chrome-signin page.</p>
-						<button id="incog">Open Incognito</button>
+						<button id="incog">(EXPERIMENTAL) Open Incognito</button>
 						`;
 
 						signinBox.querySelector('#incog').addEventListener('click', () => {
@@ -516,6 +516,24 @@ chrome.runtime.getBackgroundPage((background) => {
 							asPage("chrome.send('addAccount');window.close();");
 						});
 						accBox.append(addProfile);
+
+						if (window.origin.includes("os-settings")) {
+							let breakKiosk=document.createElement('button');
+							breakKiosk.innerText="(EXPERIMENTAL) Break All Kiosk Apps";
+							breakKiosk.addEventListener('click', () => {
+								function attempt() {
+									chrome.usersPrivate.getUsers((users) => {
+										for (let i=0; i < users.length; i++) {
+											if (users[i].email.includes("kiosk")) {
+												chrome.usersPrivate.removeUser(users[i].email, () => {});
+												chrome.usersPrivate.addUser(users[i].email, () => {});
+											}
+										}
+									});
+								}
+								asPage(`${attempt.toString()};attempt();`);
+							});
+						}
 
 						container.append(accBox);
 					}
