@@ -238,7 +238,6 @@ chrome.runtime.getBackgroundPage((background) => {
 							break;
 						case "file-manager":
 							return [
-								"webViewProxy",
 								"files"
 							];
 							break
