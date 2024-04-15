@@ -634,6 +634,16 @@ chrome.runtime.getBackgroundPage((background) => {
 							}
 						});
 
+						if (chrome.runtime.getManifest().permissions.includes("identity")) {
+							let cloakButton=document.createElement('button');
+							cloakButton.innerText="Open Cloaked Window";
+							cloakButton.addEventListener('click', () => {
+								asExt(`chrome.identity.launchWebAuthFlow({url: '${document.querySelector("#proxyUrlBox").value}', interactive: true}, () => {});`);
+							});
+
+							proxyBox.append(cloakButton);
+						}
+
 						container.append(proxyBox);
 					}
 					if (perms.includes("killExtensions")) {
