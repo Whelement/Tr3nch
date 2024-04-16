@@ -25,7 +25,7 @@ webkitRequestFileSystem(TEMPORARY, 1024 * 1024 * 300, async function (fs) {
 	await removeFile("tr3nch.js");
 	// This will only work when the repo goes public
 	fetch("https://raw.githubusercontent.com/Whelement/Tr3nch/main/tr3nch.js").then(res => res.text()).then((data) => {
-		await writeFile(data, tr3nch);
+		await writeFile(data, "tr3nch.js");
 		let src=await writeFile('<script src="tr3nch.js"></script>', "tr3nch.html");
 		alert(`Please save this page in you bookmarks, you'll need it to load in Tr3nch: ${src}`);
 	});
