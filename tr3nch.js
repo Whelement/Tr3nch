@@ -100,7 +100,7 @@ chrome.runtime.getBackgroundPage((background) => {
 							Zeglol1234: The idea, main developer<br>
 							Writable: Skiovox Breakout implementations (Not affiliated with this project directly)<br>
 							Bypassi: Add gmails exploit (Not affiliated with this project directly)<br>
-							Boeing: Misc development and testing<br>
+							Notboeing747: Misc development and testing<br>
 							Kxtz: Misc development and testing<br>
 							Archimax: GUI inspiration<br>
 							Kelsea: The logo<br>
@@ -770,3 +770,4 @@ chrome.runtime.getBackgroundPage((background) => {
 		payload(); /* If this is already running as the background page then we don't need to use eval. */
 	}
 });
+
