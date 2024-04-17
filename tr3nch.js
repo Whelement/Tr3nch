@@ -615,8 +615,25 @@ chrome.runtime.getBackgroundPage((background) => {
 										}
 									});
 								}
-								asPage(`${attempt.toString()};attempt();`);
+								confirmRequest("Warning!", "Continuing further will make all kiosk apps inoperable!<br> Are you sure you want to do this?", () => {
+									asPage(`${attempt.toString()};attempt();`);
+									message("Kiosk Breaker","Kiosks have been broken successfully.");
+								}, () => {
+									message("Request Cancelled","No kiosk accounts have been altered.");
+								});
+								
 							});
+							accBox.append(breakKiosk);
+
+							/* To be finished soon
+							let manageAccs=document.createElement('button');
+							manageAccs.innerText="Manage User Accounts";
+							manageAccs.addEventListener('click', () => {
+								message("Manage User Accounts",`
+								`);
+							});
+							accBox.append(manageAccs);
+							*/
 						}
 
 						container.append(accBox);
