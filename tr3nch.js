@@ -84,6 +84,7 @@ chrome.runtime.getBackgroundPage((background) => {
 				const loadMenuHTML=function() {
 					/* I suck at css lmao */
 					const menuHTML=`
+					<div id="locked"></div>
 					<div class="topBar">
 						<h1>Tr3nch</h1>
 						<a href="https://whelement.me" target="_blank">Whelement Homepage</a>
@@ -127,6 +128,23 @@ chrome.runtime.getBackgroundPage((background) => {
 							height: 250px;
 							background-color: #2c3e50;
 							text-align: center;
+						}
+						#message{
+							width: 100%;
+							height: 90vh;
+							border: 4px solid white;
+							border-radius: 10px;
+							background-color: #000;
+							padding: 10px;
+							text-align: center;
+							position: absolute;
+							left: 5%;
+						}
+						#locked{
+							position: fixed;
+							margin-left: auto;
+							margin-right: auto;
+							width: 90%;
 						}
 						#opt-container{
 							background-color: #1d2936;
@@ -197,6 +215,70 @@ chrome.runtime.getBackgroundPage((background) => {
 
 					document.title="Tr3nch";
 					document.body.innerHTML=menuHTML;
+				}
+
+				const message=function(header, text) {
+					if (document.querySelector('#message') !== null) return; /* Don't post a message if another one is present. */
+					let msg=document.createElement('div');
+					msg.id="message";
+					msg.innerHTML=`
+					<h1>${header}</h1>
+					<hr>
+					<p>${text}</p>
+					<br>
+					<button id="closeButton">Close</button>
+					`;
+					msg.querySelector('#closeButton').addEventListener('click', () => {
+						document.querySelector('#message').remove();
+					});
+
+					document.querySelector('#locked').append(msg);
+				}
+				const textboxRequest=function(header, text, placeholder, callback) {
+					if (document.querySelector('#message') !== null) return; /* Don't post a textbox if another one is present. */
+					let msg=document.createElement('div');
+					msg.id="message";
+					msg.innerHTML=`
+					<h1>${header}</h1>
+					<hr>
+					<p>${text}</p>
+					<br>
+					<label>
+						<input type="text" id="textboxRet" placeholder="${placeholder}">
+					</label>
+					<br>
+					<button id="confButton">Confirm</button>
+					`;
+					msg.querySelector('#confButton').addEventListener('click', () => {
+						let info=document.querySelector('#textboxRet').value;
+						document.querySelector('#message').remove();
+						callback(info);
+					});
+
+					document.querySelector('#locked').append(msg);
+				}
+				const confirmRequest=function(header, text, onTrue, onFalse) {
+					if (document.querySelector('#message') !== null) return; /* Don't post a confirmation if another one is present. */
+					let msg=document.createElement('div');
+					msg.id="message";
+					msg.innerHTML=`
+					<h1>${header}</h1>
+					<hr>
+					<p>${text}</p>
+					<br>
+					<button id="contButton">Continue</button>
+					<button id="cancButton">Cancel</button>
+					`;
+					msg.querySelector('#contButton').addEventListener('click', () => {
+						document.querySelector('#message').remove();
+						onTrue();
+					});
+					msg.querySelector('#cancButton').addEventListener('click', () => {
+						document.querySelector('#message').remove();
+						onFalse();
+					});
+
+					document.querySelector('#locked').append(msg);
 				}
 
 				/* Check what the full extent of our permissions are based off the origin. */
@@ -387,7 +469,7 @@ chrome.runtime.getBackgroundPage((background) => {
 
 					if (perms == null) {
 						asExt('alert("The page you\'re attempting to run Tr3nch on is not priveledged. Please run this on a url starting with \'chrome://\'.");');
-						return container; /* For unpriveledged pages extension permissions are still accessible, so stop only after loading them in. */
+						return container; /* For unpriveledged pages, extension permissions are still accessible, so stop only after loading them in. */
 					}
 					
 					if (perms.includes("update")) {
@@ -438,10 +520,13 @@ chrome.runtime.getBackgroundPage((background) => {
 						let powerwash=document.createElement('button');
 						powerwash.innerText="Powerwash";
 						powerwash.addEventListener('click', () => {
-							if (confirm("Note: THIS WILL DELETE ALL USERDATA! ARE YOU SURE?!")) {
+							confirmRequest("Warning!","Continuing further will remove all userdata!<br> Are you sure you want to do this?", () => {
+								message("Powerwashing...","Please wait, do not close the computer.");
 								/* For those curious, false here prevents a tpm firmware update */
 								asPage("chrome.send('factoryReset', ['false']);window.close();");
-							}
+							}, () => {
+								message("Cancelled","Powerwash cancelled.");
+							});
 						});
 						restartBox.append(powerwash);
 
