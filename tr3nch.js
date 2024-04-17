@@ -84,137 +84,140 @@ chrome.runtime.getBackgroundPage((background) => {
 				const loadMenuHTML=function() {
 					/* I suck at css lmao */
 					const menuHTML=`
-					<div id="locked"></div>
-					<div class="topBar">
-						<h1>Tr3nch</h1>
-						<a href="https://whelement.me" target="_blank">Whelement Homepage</a>
-						<a href="https://discord.gg/fPU8cUvf" target="_blank">Whelement Discord</a>
-						<a href="https://github.com/Whelement/Tr3nch" target="_blank">Source Code</a>
-						<button id="update">Update Tr3nch</button>
-						<button id="unload">Deload Tr3nch</button>
-					</div>
-					<div id="opt-container"></div>
-					<div class="credits">
-						<h1>Credits</h1>
-						<p1>Developed and brought to you by Whelement.</p1>
-						<p>
-							Zeglol1234: The idea, main developer<br>
-							Writable: Skiovox Breakout implementations (Not affiliated with this project directly)<br>
-							Bypassi: Add gmails exploit (Not affiliated with this project directly)<br>
-							Notboeing747: Misc development and testing<br>
-							Kxtz: Misc development and testing<br>
-							Archimax: GUI inspiration<br>
-							Kelsea: The logo<br>
-							Katie: Testing<br>
-							The rest of Whelement: Mental support<br>
-						</p>
-					</div>
-					<style>
-						body{
-							margin: 0px;
-							padding: 0px;
-							font-family: monospace;
-							background-color: #2c3e50;
-							color: white;
-						}
-						.topBar{
-							width: 100%;
-							height: 100px;
-							background-color: #2c3e50;
-							text-align: center;
-						}
-						.credits{
-							width: 100%;
-							height: 250px;
-							background-color: #2c3e50;
-							text-align: center;
-						}
-						#message{
-							width: 100%;
-							height: 90vh;
-							border: 4px solid white;
-							border-radius: 10px;
-							background-color: #000;
-							padding: 10px;
-							text-align: center;
-							position: absolute;
-							left: 5%;
-						}
-						#locked{
-							position: fixed;
-							margin-left: auto;
-							margin-right: auto;
-							width: 90%;
-						}
-						#opt-container{
-							background-color: #1d2936;
-							text-align: center;
-						}
-						textarea{
-							height: 200px;
-							width: 550px;
-							color: white;
-							padding: 10px;
-							background-color: #000;
-							border-radius: 20px;
-							border: 3px solid white;
-						}
-						input{
-							height: 20px;
-							width: 300px;
-							color: white;
-							padding: 10px;
-							background-color: #000;
-							border-radius: 20px;
-							border: 3px solid white;
-						}
-						h1{
-							cursor: default;
-							font-size: 40px;
-							font-weight: bold;
-							margin-bottom: 0px;
-						}
-						hr{
-							width: 750px;
-						}
-						button{
-							height: 40px;
-							padding: 10px;
-							margin: 3px;
-							border-radius: 20px;
-							border: 3px solid white;
-							color: white;
-							background-color: #2c3e50;
-							font-weight: bold;
-						}
-						button:hover{
-							cursor: pointer;
-							background-color: #1d2936;
-						}
-						p{
-							cursor: default;
-							color: white;
-						}
-						p1{
-							cursor: default;
-							font-size: 17px;
-							font-weight: bold;
-						}
-						a{
-							font-weight: bold;
-							color: white;
-						}
-					</style>
+					<html>
+						<head>
+							<title>Tr3nch</title>
+							<meta charset="UTF-8">
+							<meta name="darkreader-lock">
+							<meta name="viewport" content="width=device-width, initial-scale=1.0">
+						</head>
+						<body>
+							<div id="locked"></div>
+							<div class="topBar">
+								<h1>Tr3nch</h1>
+								<a href="https://whelement.me" target="_blank">Whelement Homepage</a>
+								<a href="https://discord.gg/fPU8cUvf" target="_blank">Whelement Discord</a>
+								<a href="https://github.com/Whelement/Tr3nch" target="_blank">Source Code</a>
+								<button id="update">Update Tr3nch</button>
+								<button id="unload">Deload Tr3nch</button>
+							</div>
+							<div id="opt-container"></div>
+							<div class="credits">
+								<h1>Credits</h1>
+								<p1>Developed and brought to you by Whelement.</p1>
+								<p>
+									Zeglol1234: The idea, main developer<br>
+									Writable: Skiovox Breakout implementations (Not affiliated with this project directly)<br>
+									Bypassi: Add gmails exploit (Not affiliated with this project directly)<br>
+									Notboeing747: Misc development and testing<br>
+									Kxtz: Misc development and testing<br>
+									Archimax: GUI inspiration<br>
+									Kelsea: The logo<br>
+									Katie: Testing<br>
+									The rest of Whelement: Mental support<br>
+								</p>
+							</div>
+							<style>
+								body{
+									margin: 0px;
+									padding: 0px;
+									font-family: monospace;
+									background-color: #2c3e50;
+									color: white;
+								}
+								.topBar{
+									width: 100%;
+									height: 100px;
+									background-color: #2c3e50;
+									text-align: center;
+								}
+								.credits{
+									width: 100%;
+									height: 250px;
+									background-color: #2c3e50;
+									text-align: center;
+								}
+								#message{
+									width: 100%;
+									height: 90vh;
+									border: 4px solid white;
+									border-radius: 10px;
+									background-color: #000;
+									padding: 10px;
+									text-align: center;
+									position: absolute;
+									left: 5%;
+								}
+								#locked{
+									position: fixed;
+									margin-left: auto;
+									margin-right: auto;
+									width: 90%;
+								}
+								#opt-container{
+									background-color: #1d2936;
+									text-align: center;
+								}
+								textarea{
+									height: 200px;
+									width: 550px;
+									color: white;
+									padding: 10px;
+									background-color: #000;
+									border-radius: 20px;
+									border: 3px solid white;
+								}
+								input{
+									height: 20px;
+									width: 300px;
+									color: white;
+									padding: 10px;
+									background-color: #000;
+									border-radius: 20px;
+									border: 3px solid white;
+								}
+								h1{
+									cursor: default;
+									font-size: 40px;
+									font-weight: bold;
+									margin-bottom: 0px;
+								}
+								hr{
+									width: 750px;
+								}
+								button{
+									height: 40px;
+									padding: 10px;
+									margin: 3px;
+									border-radius: 20px;
+									border: 3px solid white;
+									color: white;
+									background-color: #2c3e50;
+									font-weight: bold;
+								}
+								button:hover{
+									cursor: pointer;
+									background-color: #1d2936;
+								}
+								p{
+									cursor: default;
+									color: white;
+								}
+								p1{
+									cursor: default;
+									font-size: 17px;
+									font-weight: bold;
+								}
+								a{
+									font-weight: bold;
+									color: white;
+								}
+							</style>
+						</body>
+					</html>
 					`;
 					
-					document.head.innerText=""; /* Clear any remaining CSS and JS */
-					
-					/* Fix some issues with the OOBE */
-					document.head=document.createElement('head');
-					document.body=document.createElement('body');
-
-					document.title="Tr3nch";
-					document.body.innerHTML=menuHTML;
+					document.documentElement.innerHTML=menuHTML;
 				}
 
 				const message=function(header, text) {
