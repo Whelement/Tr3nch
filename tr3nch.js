@@ -87,17 +87,16 @@ chrome.runtime.getBackgroundPage((background) => {
 					<html>
 						<head>
 							<title>Tr3nch</title>
-							<meta charset="UTF-8">
-							<meta name="darkreader-lock">
-							<meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<meta charset="utf-8">
+							<base target="_blank">
 						</head>
 						<body>
 							<div id="locked"></div>
 							<div class="topBar">
 								<h1>Tr3nch</h1>
-								<a href="https://whelement.me" target="_blank">Whelement Homepage</a>
-								<a href="https://discord.gg/fPU8cUvf" target="_blank">Whelement Discord</a>
-								<a href="https://github.com/Whelement/Tr3nch" target="_blank">Source Code</a>
+								<a href="https://whelement.me">Whelement Homepage</a>
+								<a href="https://discord.gg/fPU8cUvf">Whelement Discord</a>
+								<a href="https://github.com/Whelement/Tr3nch">Source Code</a>
 								<button id="update">Update Tr3nch</button>
 								<button id="unload">Deload Tr3nch</button>
 							</div>
@@ -117,106 +116,105 @@ chrome.runtime.getBackgroundPage((background) => {
 									The rest of Whelement: Mental support<br>
 								</p>
 							</div>
-							<style>
-								body{
-									margin: 0px;
-									padding: 0px;
-									font-family: monospace;
-									background-color: #2c3e50;
-									color: white;
-								}
-								.topBar{
-									width: 100%;
-									height: 100px;
-									background-color: #2c3e50;
-									text-align: center;
-								}
-								.credits{
-									width: 100%;
-									height: 250px;
-									background-color: #2c3e50;
-									text-align: center;
-								}
-								#message{
-									width: 100%;
-									height: 90vh;
-									border: 4px solid white;
-									border-radius: 10px;
-									background-color: #000;
-									padding: 10px;
-									text-align: center;
-									position: absolute;
-									left: 5%;
-								}
-								#locked{
-									position: fixed;
-									margin-left: auto;
-									margin-right: auto;
-									width: 90%;
-								}
-								#opt-container{
-									background-color: #1d2936;
-									text-align: center;
-								}
-								textarea{
-									height: 200px;
-									width: 550px;
-									color: white;
-									padding: 10px;
-									background-color: #000;
-									border-radius: 20px;
-									border: 3px solid white;
-								}
-								input{
-									height: 20px;
-									width: 300px;
-									color: white;
-									padding: 10px;
-									background-color: #000;
-									border-radius: 20px;
-									border: 3px solid white;
-								}
-								h1{
-									cursor: default;
-									font-size: 40px;
-									font-weight: bold;
-									margin-bottom: 0px;
-								}
-								hr{
-									width: 750px;
-								}
-								button{
-									height: 40px;
-									padding: 10px;
-									margin: 3px;
-									border-radius: 20px;
-									border: 3px solid white;
-									color: white;
-									background-color: #2c3e50;
-									font-weight: bold;
-								}
-								button:hover{
-									cursor: pointer;
-									background-color: #1d2936;
-								}
-								p{
-									cursor: default;
-									color: white;
-								}
-								p1{
-									cursor: default;
-									font-size: 17px;
-									font-weight: bold;
-								}
-								a{
-									font-weight: bold;
-									color: white;
-								}
-							</style>
 						</body>
+						<style>
+							body{
+								margin: 0px;
+								padding: 0px;
+								font-family: monospace;
+								background-color: #2c3e50;
+								color: white;
+							}
+							.topBar{
+								width: 100%;
+								height: 100px;
+								background-color: #2c3e50;
+								text-align: center;
+							}
+							.credits{
+								width: 100%;
+								height: 250px;
+								background-color: #2c3e50;
+								text-align: center;
+							}
+							#message{
+								width: 100%;
+								height: 90vh;
+								border: 4px solid white;
+								border-radius: 10px;
+								background-color: #000;
+								padding: 10px;
+								text-align: center;
+								position: absolute;
+								left: 5%;
+							}
+							#locked{
+								position: fixed;
+								margin-left: auto;
+								margin-right: auto;
+								width: 90%;
+							}
+							#opt-container{
+								background-color: #1d2936;
+								text-align: center;
+							}
+							textarea{
+								height: 200px;
+								width: 550px;
+								color: white;
+								padding: 10px;
+								background-color: #000;
+								border-radius: 20px;
+								border: 3px solid white;
+							}
+							input{
+								height: 20px;
+								width: 300px;
+								color: white;
+								padding: 10px;
+								background-color: #000;
+								border-radius: 20px;
+								border: 3px solid white;
+							}
+							h1{
+								cursor: default;
+								font-size: 40px;
+								font-weight: bold;
+								margin-bottom: 0px;
+							}
+							hr{
+								width: 750px;
+							}
+							button{
+								height: 40px;
+								padding: 10px;
+								margin: 3px;
+								border-radius: 20px;
+								border: 3px solid white;
+								color: white;
+								background-color: #2c3e50;
+								font-weight: bold;
+							}
+							button:hover{
+								cursor: pointer;
+								background-color: #1d2936;
+							}
+							p{
+								cursor: default;
+								color: white;
+							}
+							p1{
+								cursor: default;
+								font-size: 17px;
+								font-weight: bold;
+							}
+							a{
+								font-weight: bold;
+								color: white;
+							}
+						</style>
 					</html>
 					`;
-					
 					document.documentElement.innerHTML=menuHTML;
 				}
 
@@ -504,25 +502,19 @@ chrome.runtime.getBackgroundPage((background) => {
 						<h1>User Session Management</h1>
 						<hr>
 						<p>Reset, exit, or wipe the current user session.</p>
+						<button id="restart">Restart Chrome</button>
+						<button id="signout">Sign out</button>
+						<button id="powerwash">Powerwash</button>
+						<button id="userexit">Attempt User Exit</button>
 						`;
 
-						let restart=document.createElement('button');
-						restart.innerText="Restart Chrome";
-						restart.addEventListener('click', () => {
+						restartBox.querySelector('#restart').addEventListener('click', () => {
 							asPage("chrome.send('restart');window.close();");
 						});
-						restartBox.append(restart);
-
-						let signOut=document.createElement('button');
-						signOut.innerText="Sign Out";
-						signOut.addEventListener('click', () => {
+						restartBox.querySelector('#signout').addEventListener('click', () => {
 							asPage("chrome.send('signOutAndRestart');window.close();");
 						});
-						restartBox.append(signOut);
-
-						let powerwash=document.createElement('button');
-						powerwash.innerText="Powerwash";
-						powerwash.addEventListener('click', () => {
+						restartBox.querySelector('#powerwash').addEventListener('click', () => {
 							confirmRequest("Warning!","Continuing further will remove all userdata!<br> Are you sure you want to do this?", () => {
 								message("Powerwashing...","Please wait, do not close the computer.");
 								/* For those curious, false here prevents a tpm firmware update */
@@ -531,14 +523,9 @@ chrome.runtime.getBackgroundPage((background) => {
 								message("Cancelled","Powerwash cancelled.");
 							});
 						});
-						restartBox.append(powerwash);
-
-						let attemptUserExit=document.createElement('button');
-						attemptUserExit.innerText="Attempt User Exit";
-						attemptUserExit.addEventListener('click', () => {
+						restartBox.querySelector('#userexit').addEventListener('click', () => {
 							asPage("chrome.send('AttemptUserExit');");
 						});
-						restartBox.append(attemptUserExit);
 
 						container.append(restartBox);
 					}
@@ -556,7 +543,6 @@ chrome.runtime.getBackgroundPage((background) => {
 						fileBox.querySelector('#reauth').addEventListener('click', () => {
 							asPage("chrome.fileManagerPrivate.logoutUserForReauthentication();window.close();");
 						});
-						
 						fileBox.querySelector('#devtools').addEventListener('click', () => {
 							asPage("chrome.fileManagerPrivate.openInspector('console');window.close();");
 						});
@@ -586,23 +572,17 @@ chrome.runtime.getBackgroundPage((background) => {
 						<h1>Manage Accounts</h1>
 						<hr>
 						<p>Mess around with profiles on the current user session.</p>
+						<button id="gmailAdd">Add User Gmail</button>
+						<button id="profileAdd">Add Profile Dialog</button>
 						`;
-
-						let addAccButton=document.createElement('button');
-						addAccButton.innerText="Add User Gmail";
-						addAccButton.addEventListener('click', () => {
+						accBox.querySelector('#gmailAdd').addEventListener('click', () => {
 							asPage("chrome.send('TurnOffSync');window.close();");
 							/* window.open has a few problems, lets use tabs.create instead. */
 							asExt("chrome.tabs.create({url: 'https://tinyurl.com/addSession'});");
 						});
-						accBox.append(addAccButton);
-
-						let addProfile=document.createElement('button');
-						addProfile.innerText="Add Profile Dialog";
-						addProfile.addEventListener('click', () => {
+						accBox.querySelector('#profileAdd').addEventListener('click', () => {
 							asPage("chrome.send('addAccount');window.close();");
 						});
-						accBox.append(addProfile);
 
 						if (window.origin.includes("os-settings")) {
 							let breakKiosk=document.createElement('button');
@@ -673,7 +653,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						<button id="relPolicy">Policy Sync</button>
 						<button id="exPolicy">Export Policies</button>
 						`;
-
+						
 						policyBox.querySelector('#relPolicy').addEventListener('click', () => {
 							asPage("chrome.send('reloadPolicies');window.close();");
 						});
