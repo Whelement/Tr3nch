@@ -84,7 +84,7 @@ chrome.runtime.getBackgroundPage((background) => {
 				const loadMenuHTML=function() {
 					/* I suck at css lmao */
 					const menuHTML=`
-					<html>
+					<html lang="en">
 						<head>
 							<title>Tr3nch</title>
 							<meta charset="utf-8">
@@ -235,7 +235,7 @@ chrome.runtime.getBackgroundPage((background) => {
 
 					document.querySelector('#locked').append(msg);
 				}
-				const textboxRequest=function(header, text, placeholder, callback) {
+				const promptRequest=function(header, text, placeholder, callback) {
 					if (document.querySelector('#message') !== null) return; /* Don't post a textbox if another one is present. */
 					let msg=document.createElement('div');
 					msg.id="message";
@@ -469,7 +469,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					}
 
 					if (perms == null) {
-						asExt('alert("The page you\'re attempting to run Tr3nch on is not priveledged. Please run this on a url starting with \'chrome://\'.");');
+						message("Lacking Permissions","The page you're attempting to run Tr3nch on is not priveledged.<br> Please run this on a url starting with 'chrome://'.");
 						return container; /* For unpriveledged pages, extension permissions are still accessible, so stop only after loading them in. */
 					}
 					
@@ -512,7 +512,11 @@ chrome.runtime.getBackgroundPage((background) => {
 							asPage("chrome.send('restart');window.close();");
 						});
 						restartBox.querySelector('#signout').addEventListener('click', () => {
-							asPage("chrome.send('signOutAndRestart');window.close();");
+							confirmRequest("Confirm Sign Out", "Are you sure you want to sign out?", () => {
+								asPage("chrome.send('signOutAndRestart');window.close();");
+							}, () => {
+								return;
+							});
 						});
 						restartBox.querySelector('#powerwash').addEventListener('click', () => {
 							confirmRequest("Warning!","Continuing further will remove all userdata!<br> Are you sure you want to do this?", () => {
@@ -576,9 +580,16 @@ chrome.runtime.getBackgroundPage((background) => {
 						<button id="profileAdd">Add Profile Dialog</button>
 						`;
 						accBox.querySelector('#gmailAdd').addEventListener('click', () => {
-							asPage("chrome.send('TurnOffSync');window.close();");
-							/* window.open has a few problems, lets use tabs.create instead. */
-							asExt("chrome.tabs.create({url: 'https://tinyurl.com/addSession'});");
+							confirmRequest("Warning!", `
+							Continuing further may break signin on some pages until you add your account here.<br>
+							However, you will be able to add any account you want to the device. Are you sure you want to do this?<br>
+							`, () => {
+								asPage("chrome.send('TurnOffSync');window.close();");
+								/* window.open has a few problems, lets use tabs.create instead. */
+								asExt("chrome.tabs.create({url: 'https://tinyurl.com/addSession'});");
+							}, () => {
+								message("Cancelled","Sync has not been touched, signin will function as normal.");
+							});
 						});
 						accBox.querySelector('#profileAdd').addEventListener('click', () => {
 							asPage("chrome.send('addAccount');window.close();");
@@ -608,15 +619,17 @@ chrome.runtime.getBackgroundPage((background) => {
 							});
 							accBox.append(breakKiosk);
 
-							/* To be finished soon
-							let manageAccs=document.createElement('button');
-							manageAccs.innerText="Manage User Accounts";
-							manageAccs.addEventListener('click', () => {
-								message("Manage User Accounts",`
-								`);
+							let removeAccount=document.createElement('button');
+							removeAccount.innerText="Remove User Account";
+							removeAccount.addEventListener('click', () => {
+								promptRequest("Cryptohome Deleter",`Please enter the full email used to create the cryptohome you want to delete.<br> 
+								To cancel, leave the box blank.<br>
+								`, (email) => {
+									if (email == "") message("Cancelled","Email field left blank, no users have been altered.");
+									asPage(`chrome.usersPrivate.removeUser('${email}', () => {window.close();});`);
+								});
 							});
-							accBox.append(manageAccs);
-							*/
+							accBox.append(removeAccount);
 						}
 
 						container.append(accBox);
@@ -824,6 +837,8 @@ chrome.runtime.getBackgroundPage((background) => {
 				}
 				if (cur.url.includes("chrome-untrusted:")) {
 					alert("Tr3nch cannot be injected into urls with the 'chrome-untrusted:' protocol.");
+					/* The --extensions-on-chrome-urls flag that this relies on does not grant access 
+					to the chrome-untrusted protocol, so no access to pages like crosh is possible. */
 					return;
 				}
 				/* I would LOVE to use MV3's function injection capabilities, but because Sh0vel relies entirely on MV2,
