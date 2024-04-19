@@ -607,6 +607,7 @@ chrome.runtime.getBackgroundPage((background) => {
 												chrome.usersPrivate.addUser(users[i].email, () => {});
 											}
 										}
+										window.close();
 									});
 								}
 								confirmRequest("Warning!", "Continuing further will make all kiosk apps inoperable!<br> Are you sure you want to do this?", () => {
