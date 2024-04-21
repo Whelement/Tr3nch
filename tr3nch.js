@@ -7,50 +7,6 @@ chrome.runtime.getBackgroundPage((background) => {
 					it just so happens Sh0vel requires eval, soooooo...*/
 					eval(message.code);
 					break;
-				case "update":
-					/* Most of this was ripped from installer.js */
-					webkitRequestFileSystem(TEMPORARY, 1024 * 1024 * 300, async function(fs) {
-						function writeFile(name, data) {
-							return new Promise((resolve) => {
-								fs.root.getFile(name, {create: true}, function (entry) {
-									entry.createWriter(function (writer) {
-										writer.write(new Blob([data]));
-                    					writer.onwriteend=function() {
-											resolve(entry);
-										}
-									});
-								});
-							});
-						}
-						function removeFile(name) {
-							return new Promise(function (resolve) {
-								fs.root.getFile(name, {create: true}, function (entry) {
-									entry.remove(resolve);
-								});
-							});
-						}
-						function downloadFile(source, name) {
-							return new Promise((resolve) => {
-								fetch(source).then(res => res.text()).then(async (data) => {
-									await removeFile(name);
-									await writeFile(name, data);
-								});
-							});
-						}
-
-						/* It's important we don't execute if wifi is off, because 
-						writing an invalid fetch request wipes the entire file */
-						if (navigator.onLine) { 
-							console.log("Updating Tr3nch");
-							let src=await writeFile('<script src="tr3nch.js"></script>', "tr3nch.html"); /* We'll want to reinstall the HTML loader in case it's broken */
-							await downloadFile("https://raw.githubusercontent.com/Whelement/Tr3nch/main/tr3nch.js","tr3nch.js");
-
-							console.log("Successfully updated Tr3nch. Save this page in your bookmarks if you haven't already:" + src);
-						}else{
-							console.error("Cannot update Tr3nch, wifi is disconnected.");
-						}
-					});
-					break;
 				case "disable":
 					chrome.management.setEnabled(message.id, !message.disable);
 					break;
@@ -97,7 +53,6 @@ chrome.runtime.getBackgroundPage((background) => {
 								<a href="https://whelement.me">Whelement Homepage</a>
 								<a href="https://discord.gg/fPU8cUvf">Whelement Discord</a>
 								<a href="https://github.com/Whelement/Tr3nch">Source Code</a>
-								<button id="update">Update Tr3nch</button>
 								<button id="unload">Deload Tr3nch</button>
 							</div>
 							<div id="opt-container"></div>
@@ -818,9 +773,6 @@ chrome.runtime.getBackgroundPage((background) => {
 				}
 				mainContainer.append(loadMenuItems()); /* Create a container for all options and append them */
 
-				document.querySelector('#update').addEventListener('click', () => {
-					chrome.runtime.sendMessage(chrome.runtime.id, {cmd: "update"});
-				});
 				document.querySelector('#unload').addEventListener('click', () => {
 					/* Close the menu and reload the background page, clearing all traces of Tr3nch */
 					asExt('chrome.tabs.getSelected((cur) => {chrome.tabs.remove(cur.id);location.reload();});');
