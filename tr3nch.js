@@ -55,7 +55,9 @@ chrome.runtime.getBackgroundPage((background) => {
 								<a href="https://github.com/Whelement/Tr3nch">Source Code</a>
 								<button id="unload">Deload Tr3nch</button>
 							</div>
-							<div id="opt-container"></div>
+							<div id="opt-container">
+								<br>
+							</div>
 							<div class="credits">
 								<h1>Credits</h1>
 								<p1>Developed and brought to you by Whelement.</p1>
@@ -91,6 +93,12 @@ chrome.runtime.getBackgroundPage((background) => {
 								height: 250px;
 								background-color: #2c3e50;
 								text-align: center;
+							}
+							#items{
+								width: 825px;
+								padding: 10px;
+								border: 3px dotted white;
+								margin: 0 auto 0;
 							}
 							#message{
 								width: 100%;
@@ -305,6 +313,7 @@ chrome.runtime.getBackgroundPage((background) => {
 				const loadMenuItems=function() {
 					let perms=checkPerms();
 					let container=document.createElement('div');
+					container.id="items";
 
 					/*=================================================================
 					Permission Independent Options
@@ -772,6 +781,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					return;
 				}
 				mainContainer.append(loadMenuItems()); /* Create a container for all options and append them */
+				mainContainer.append(document.createElement('br'));
 
 				document.querySelector('#unload').addEventListener('click', () => {
 					/* Close the menu and reload the background page, clearing all traces of Tr3nch */
@@ -823,4 +833,3 @@ chrome.runtime.getBackgroundPage((background) => {
 		payload(); /* If this is already running as the background page then we don't need to use eval. */
 	}
 });
-
