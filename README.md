@@ -21,19 +21,16 @@ However, Google has patched Skiovox in ChromeOS release R121, breaking the setup
 Warning! This exploit might be difficult to setup if you do not have at least some experience with exploits like skiovox breakout and sh0vel! If you are technically challenged, this might not be the best exploit for you.
 
 Usage is fairly straight forward:
-- Find an extension capable of executing Sh0vel. Some known ones are GoGuardian and Equatio, but to see if another potential extension is vulnerable, open its manfest and verify that "manifest_version" is set to 2 (3 WILL NOT WORK!), verify that "unsafe-eval" (NOT "wasm-unsafe-eval", that will NOT WORK!) is in the "content_security_policy" tag at least somewhere (This does not count if it is in the "sandbox" attribute that will not work!), and that "activeTab" is in the list of permissions.
+- Find and install an extension capable of executing Sh0vel (it will still work if it's installed from the webstore or admin installed). Some known ones are GoGuardian and Equatio, but to see if another potential extension is vulnerable, open its manifest and verify that "manifest_version" is set to 2 (3 WILL NOT WORK!), verify that "unsafe-eval" (NOT "wasm-unsafe-eval", that will NOT WORK!) is in the "content_security_policy" tag at least somewhere (This does not count if it is in the "sandbox" attribute that will not work!), and that "activeTab" is in the list of permissions.
 - Set up Skiovox Breakout on the extension. See [this guide](https://rentry.co/pm6ta) on how to do that.
 - On this repo, copy the contents of `tr3nch.js`, open the page you bookmarked for skiovox breakout (if you cant open it normally, right click the bookmark and select "Open in New Tab"), paste the contents into the textbox, and press evaluate.
 - Tr3nch is now set up on this extension. When the extension restarts (e.g. from signing out/in, killing it and disabling it, or deloading tr3nch), tr3nch will be unloaded, and can be reloaded by opening the skiovox breakout page (Yes you HAVE to open it first!) and changing the url to `filesystem:chrome-extension://id_for_the_extension_here/temporary/evaluations/index.html`. If you ever run something other than tr3nch from skiovox breakout you will need to redo the setup.
 - Once tr3nch is set up, go to any "chrome url" (The best of which being chrome://extensions, chrome://chrome-signin, chrome://os-settings, chrome://settings, and chrome://file-manager) and clicking the icon of the extension you injected tr3nch into in the top right menu.
 
 ### Credits
-- Zeglol1234: The idea, main developer
-- Writable: Skiovox Breakout implementations (Not affiliated with this project directly)
-- Bypassi: Add gmails exploit (Not affiliated with this project directly)
-- Notboeing747: Misc development and testing
-- Kxtz: Misc development and testing
-- Archimax: GUI inspiration
-- Kelsea: The logo
+- Zeglol1234: The general idea, Main developer
+- Writable: Assistance with Sh0vel and code from skiovox-breakout
+- Kelsea: Making the logo
+- Kxtz: Misc development & Testing
+- Notboeing747: Misc development & Testing
 - Katie: Testing
-- The rest of Whelement: Mental support
