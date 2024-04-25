@@ -94,12 +94,6 @@ chrome.runtime.getBackgroundPage((background) => {
 								background-color: #2c3e50;
 								text-align: center;
 							}
-							#items{
-								width: 825px;
-								padding: 10px;
-								border: 3px dotted white;
-								margin: 0 auto 0;
-							}
 							#message{
 								width: 100%;
 								height: 90vh;
@@ -833,3 +827,4 @@ chrome.runtime.getBackgroundPage((background) => {
 		payload(); /* If this is already running as the background page then we don't need to use eval. */
 	}
 });
+
