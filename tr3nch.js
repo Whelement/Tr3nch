@@ -35,7 +35,16 @@ chrome.runtime.getBackgroundPage((background) => {
 				"sh0vel", and we can use it to not only access private chrome APIs, but also Mojo and WEBUI.*/
 				const asPage=function(code) {
 					let link=window.open('about:blank','_blank');
-					link.location.href=`javascript:(function() {chrome=opener.chrome;console=opener.console;${code}})();`;
+					link.location.href=`javascript:(function() {
+						chrome=opener.chrome;
+						console=opener.console;
+						if (opener.Mojo) {
+							window.Mojo=opener.Mojo;
+							window.mojo=opener.mojo;
+							window.chromeos=opener.chromeos;
+						}
+						${code}
+					})();`;
 					/* We don't call link.close here as some callbacks need to run before closing, so
 					ALL asPage calls need to have window.close be the last thing that runs unless you need the extra tab */
 				}
@@ -67,6 +76,7 @@ chrome.runtime.getBackgroundPage((background) => {
 								<a href="https://github.com/Whelement/Tr3nch">Source Code</a>
 								<button id="unload">Deload Tr3nch</button>
 								<button id="pubkey">View Public Key</button>
+								<button id="faq">FAQ</button>
 							</div>
 							<div id="opt-container">
 								<br>
@@ -119,6 +129,7 @@ chrome.runtime.getBackgroundPage((background) => {
 								position: absolute;
 								left: 5%;
 								overflow-wrap: break-word;
+								overflow: scroll;
 							}
 							#locked{
 								position: fixed;
@@ -390,16 +401,19 @@ chrome.runtime.getBackgroundPage((background) => {
 						redirBox.append(redir);
 					}
 					addPage('chrome://extensions');
-					addPage('chrome://os-settings');
+					if (navigator.appVersion.includes("CrOS")) addPage('chrome://os-settings');
 					addPage('chrome://settings');
-					addPage('chrome://file-manager');
+					if (navigator.appVersion.includes("CrOS")) addPage('chrome://file-manager');
 					addPage('chrome://chrome-signin');
 					addPage('chrome://flags');
 					addPage('chrome://network');
 					addPage('chrome://policy');
+					addPage('chrome://bookmarks');
+					addPage('chrome://history');
+					addPage('chrome://inspect');
 					if (chromeVer < 109) {
 						/* The OOBE can't be accessed from user sessions past R109. */
-						addPage('chrome://oobe');
+						if (navigator.appVersion.includes("CrOS")) addPage('chrome://oobe');
 					}
 					
 					container.append(redirBox);
@@ -841,6 +855,64 @@ chrome.runtime.getBackgroundPage((background) => {
 					message('Public Key',`
 					Current extension's public key:<br><br> ${chrome.runtime.getManifest().key}<br><br>
 					This can be used to load the extension unpacked and modify its code, if you don't know how to do that or have no use then ignore this and move on.
+					`);
+				});
+				document.querySelector('#faq').addEventListener('click', () => {
+					message('Frequently Asked Questions',`
+					<p1>Q: Some urls are blocked!</p1>
+					<br>
+					A: The url is likely set in a policy blocklist. This cannot be bypassed currently, though you should probably try disabling/loopkilling
+					any filter extensions you have on your device to see if that fixes it. 
+					<br><br>
+					
+					<p1>Q: There isn't an option for *blah blah blah*</p1>
+					<br>
+					A: Options rely on the current page and extension. If an option isn't present, it's because you're on the wrong page or your extension
+					doesn't have the necessary permissions. Try visiting some of the pages in the quick redirect section to see more options.
+					<br><br>
+					
+					<p1>Q: What are "EXPERIMENTAL"'s?</p1>
+					<br>
+					A: Those are options that are either not fully tested or not fully developed. I recommend you don't use them unless you know what you're doing.
+					<br><br>
+
+					<p1>Q: Will this still work if I update?</p1>
+					<br>
+					A: Yes, as long as you have code execution on the extension, which is persistent if you used skiovox breakout. This will likely never be patched.
+					<br><br>
+
+					<p1>Q: How do I update Tr3nch?</p1>
+					<br>
+					A: Tr3nch will regularly recieve updates with new features and bug fixes, I recommend you recopy Tr3nch.js from <a href="https://github.com/Whelement?Tr3nch" target="_blank">the source code</a>
+					into skiovox breakout and evaluate it every now and then to keep Tr3nch up to date.
+					<br><br>
+
+					<p1>Q: I got my chromebook switched/powerwashed, will Tr3nch still be installed?</p1>
+					<br>
+					A: No, you will need to redo the setup if your chromebook ever gets replaced or powerwashed.
+					<br><br>
+
+					<p1>Q: Skiovox doesn't work anymore! Will I be able to do this in the future?</p1>
+					<br>
+					A: Yes, though it will require getting code execution on an extension vulnerable to Sh0vel, the bug Tr3nch relies on, which is
+					difficult to do without skiovox. These instructions will be updated as more means of code execution are discovered.
+					<br><br>
+
+					<p1>Q: Can I get in trouble for using this?</p1>
+					<br>
+					A: At most your school will likely take your chromebook permissions away, if you don't misuse it and are smart about things,
+					you should be fine.
+					<br><br>
+
+					<p1>Q: I found a bug, where do I report it?</p1>
+					<br>
+					A: Go to the source code, navigate to issues, make sure, there aren't any duplicates of your problem, and report it there.
+					<br><br>
+
+					<p1>Q: Tr3nch doesn't work when I'm in skiovox!</p1>
+					<br>
+					A: This is because of a bug with the tabs api, it cannot be fixed. 
+					<br><br>
 					`);
 				});
 			} /* As Page */
