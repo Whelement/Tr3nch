@@ -256,8 +256,8 @@ chrome.runtime.getBackgroundPage((background) => {
 				/* Check what the full extent of our permissions are based off the origin. */
 				const checkPerms=function() {
 					/* We use window.origin so url parameters can't break the menu */
-					if (!window.origin.includes("chrome:")) return null;
-
+					if (!window.origin.includes("chrome://")) return null;
+					
 					switch(window.origin.replace("chrome://","")) {
 						case "oobe":
 							return [
@@ -754,7 +754,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						<br>
 						<button id="killIdButton">LoopKill Extension</button>
 						<button id="resIdButton">Restart Extension</button>
-						<button id="updateButton"Update Extensions></button>
+						<button id="updateButton">Update Extensions</button>
 						`;
 						killBox.querySelector('#killIdButton').addEventListener('click', () => {
 							let id=document.querySelector('#killIdBox').value;
@@ -819,7 +819,6 @@ chrome.runtime.getBackgroundPage((background) => {
 					
 					return container;
 				}
-
 				let chromeVer=navigator.appVersion.match(/Chrom(e|ium)\/([0-9]+)/)[2];
 
 				loadMenuHTML(); /* Load in the base menu */
@@ -839,7 +838,10 @@ chrome.runtime.getBackgroundPage((background) => {
 				});
 				document.querySelector('#pubkey').addEventListener('click', () => {
 					/* This will work regardless of if the key is present in the manifest or not. */
-					message('Public Key',`Current extension's public key:<br><br> ${chrome.runtime.getManifest().key}`);
+					message('Public Key',`
+					Current extension's public key:<br><br> ${chrome.runtime.getManifest().key}<br><br>
+					This can be used to load the extension unpacked and modify its code, if you don't know how to do that or have no use then ignore this and move on.
+					`);
 				});
 			} /* As Page */
 
