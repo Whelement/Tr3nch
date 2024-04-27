@@ -94,6 +94,7 @@ chrome.runtime.getBackgroundPage((background) => {
 									Kelsea: The logo<br>
 									Katie: Testing<br>
 									The rest of Whelement: Mental support<br>
+									<!-- Thanks for making poor design choices for us :trolley: -->
 									${chrome.runtime.getManifest().name}: Being vulnerable to Sh0vel<br>
 								</p>
 							</div>
@@ -198,6 +199,76 @@ chrome.runtime.getBackgroundPage((background) => {
 						</style>
 					</html>
 					`;
+
+					document.querySelector('#unload').addEventListener('click', () => {
+						/* Close the menu and reload the background page, clearing all traces of Tr3nch */
+						asExt('chrome.tabs.getSelected((cur) => {chrome.tabs.remove(cur.id);location.reload();});');
+					});
+					document.querySelector('#pubkey').addEventListener('click', () => {
+						/* This will work regardless of if the key is present in the manifest or not. */
+						message('Public Key',`
+						Current extension's public key:<br><br> ${chrome.runtime.getManifest().key}<br><br>
+						This can be used to load the extension unpacked and modify its code, if you don't know how to do that or have no use then ignore this and move on.
+						`);
+					});
+					document.querySelector('#faq').addEventListener('click', () => {
+						message('Frequently Asked Questions',`
+						<p1>Q: Some urls are blocked!</p1>
+						<br>
+						A: The url is likely set in a policy blocklist. This cannot be bypassed currently, though you should probably try disabling/loopkilling
+						any filter extensions you have on your device to see if that fixes it. 
+						<br><br>
+						
+						<p1>Q: There isn't an option for *blah blah blah*</p1>
+						<br>
+						A: Options rely on the current page and extension. If an option isn't present, it's because you're on the wrong page or your extension
+						doesn't have the necessary permissions. Try visiting some of the pages in the quick redirect section to see more options.
+						<br><br>
+						
+						<p1>Q: What are "EXPERIMENTAL"'s?</p1>
+						<br>
+						A: Those are options that are either not fully tested or not fully developed. I recommend you don't use them unless you know what you're doing.
+						<br><br>
+
+						<p1>Q: Will this still work if I update?</p1>
+						<br>
+						A: Yes, as long as you have code execution on the extension, which is persistent if you used skiovox breakout. This will likely never be patched.
+						<br><br>
+	
+						<p1>Q: How do I update Tr3nch?</p1>
+						<br>
+						A: Tr3nch will regularly recieve updates with new features and bug fixes, I recommend you recopy Tr3nch.js from <a href="https://github.com/Whelement?Tr3nch" target="_blank">the source code</a>
+						into skiovox breakout and evaluate it every now and then to keep Tr3nch up to date.
+						<br><br>
+	
+						<p1>Q: I got my chromebook switched/powerwashed, will Tr3nch still be installed?</p1>
+						<br>
+						A: No, you will need to redo the setup if your chromebook ever gets replaced or powerwashed.
+						<br><br>
+	
+						<p1>Q: Skiovox doesn't work anymore! Will I be able to do this in the future?</p1>
+						<br>
+						A: Yes, though it will require getting code execution on an extension vulnerable to Sh0vel, the bug Tr3nch relies on, which is
+						difficult to do without skiovox. These instructions will be updated as more means of code execution are discovered.
+						<br><br>
+	
+						<p1>Q: Can I get in trouble for using this?</p1>
+						<br>
+						A: At most your school will likely take your chromebook permissions away, if you don't misuse it and are smart about things,
+						you should be fine.
+						<br><br>
+	
+						<p1>Q: I found a bug, where do I report it?</p1>
+						<br>
+						A: Go to the source code, navigate to issues, make sure, there aren't any duplicates of your problem, and report it there.
+						<br><br>
+	
+						<p1>Q: Tr3nch doesn't work when I'm in skiovox!</p1>
+						<br>
+						A: This is because of a bug with the tabs api, it cannot be fixed. 
+						<br><br>
+						`);
+					});
 				}
 
 				const message=function(header, text) {
@@ -423,7 +494,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					Put options that DO need specific page permissions here
 					=================================================================*/
 					
-					if (chrome.runtime.getManifest().permissions.includes("management")) {
+					if (chrome.runtime.getManifest().permissions.includes("management") || (perms.includes("manExtensions") && chromeVer < 106)) {
 						let disableBox=document.createElement('div');
 						disableBox.innerHTML=`
 						<br>
@@ -439,6 +510,10 @@ chrome.runtime.getBackgroundPage((background) => {
 						<button id="enableIdButton">Enable Extension</button>
 						`;
 						disableBox.querySelector('#disableIdButton').addEventListener('click', () => {
+							if (perms.includes("manExtensions") && chromeVer < 106) {
+								asPage(`chrome.management.setEnabled('${document.querySelector('#disableIdBox').value}', false);window.close();`);
+								return;
+							}
 							/* Unfortunately we are still a content script, so we do have to play by the rules :( */
 							chrome.runtime.sendMessage({
 								cmd: 'disable', 
@@ -447,6 +522,10 @@ chrome.runtime.getBackgroundPage((background) => {
 							});
 						});
 						disableBox.querySelector('#enableIdButton').addEventListener('click', () => {
+							if (perms.includes("manExtensions") && chromeVer < 106) {
+								asPage(`chrome.management.setEnabled('${document.querySelector('#disableIdBox').value}', true);window.close();`);
+								return;
+							}
 							chrome.runtime.sendMessage({
 								cmd: 'disable', 
 								id: document.querySelector('#disableIdBox').value,
@@ -833,88 +912,14 @@ chrome.runtime.getBackgroundPage((background) => {
 					
 					return container;
 				}
+	
 				let chromeVer=navigator.appVersion.match(/Chrom(e|ium)\/([0-9]+)/)[2];
-
+				
 				loadMenuHTML(); /* Load in the base menu */
+				
 				let mainContainer=document.querySelector('#opt-container');
-
-				if (mainContainer == null) {
-					/* For testing */
-					asExt("alert('No GUI container was found, Tr3nch cannot be loaded in.');");
-					return;
-				}
 				mainContainer.append(loadMenuItems()); /* Create a container for all options and append them */
 				mainContainer.append(document.createElement('br'));
-
-				document.querySelector('#unload').addEventListener('click', () => {
-					/* Close the menu and reload the background page, clearing all traces of Tr3nch */
-					asExt('chrome.tabs.getSelected((cur) => {chrome.tabs.remove(cur.id);location.reload();});');
-				});
-				document.querySelector('#pubkey').addEventListener('click', () => {
-					/* This will work regardless of if the key is present in the manifest or not. */
-					message('Public Key',`
-					Current extension's public key:<br><br> ${chrome.runtime.getManifest().key}<br><br>
-					This can be used to load the extension unpacked and modify its code, if you don't know how to do that or have no use then ignore this and move on.
-					`);
-				});
-				document.querySelector('#faq').addEventListener('click', () => {
-					message('Frequently Asked Questions',`
-					<p1>Q: Some urls are blocked!</p1>
-					<br>
-					A: The url is likely set in a policy blocklist. This cannot be bypassed currently, though you should probably try disabling/loopkilling
-					any filter extensions you have on your device to see if that fixes it. 
-					<br><br>
-					
-					<p1>Q: There isn't an option for *blah blah blah*</p1>
-					<br>
-					A: Options rely on the current page and extension. If an option isn't present, it's because you're on the wrong page or your extension
-					doesn't have the necessary permissions. Try visiting some of the pages in the quick redirect section to see more options.
-					<br><br>
-					
-					<p1>Q: What are "EXPERIMENTAL"'s?</p1>
-					<br>
-					A: Those are options that are either not fully tested or not fully developed. I recommend you don't use them unless you know what you're doing.
-					<br><br>
-
-					<p1>Q: Will this still work if I update?</p1>
-					<br>
-					A: Yes, as long as you have code execution on the extension, which is persistent if you used skiovox breakout. This will likely never be patched.
-					<br><br>
-
-					<p1>Q: How do I update Tr3nch?</p1>
-					<br>
-					A: Tr3nch will regularly recieve updates with new features and bug fixes, I recommend you recopy Tr3nch.js from <a href="https://github.com/Whelement?Tr3nch" target="_blank">the source code</a>
-					into skiovox breakout and evaluate it every now and then to keep Tr3nch up to date.
-					<br><br>
-
-					<p1>Q: I got my chromebook switched/powerwashed, will Tr3nch still be installed?</p1>
-					<br>
-					A: No, you will need to redo the setup if your chromebook ever gets replaced or powerwashed.
-					<br><br>
-
-					<p1>Q: Skiovox doesn't work anymore! Will I be able to do this in the future?</p1>
-					<br>
-					A: Yes, though it will require getting code execution on an extension vulnerable to Sh0vel, the bug Tr3nch relies on, which is
-					difficult to do without skiovox. These instructions will be updated as more means of code execution are discovered.
-					<br><br>
-
-					<p1>Q: Can I get in trouble for using this?</p1>
-					<br>
-					A: At most your school will likely take your chromebook permissions away, if you don't misuse it and are smart about things,
-					you should be fine.
-					<br><br>
-
-					<p1>Q: I found a bug, where do I report it?</p1>
-					<br>
-					A: Go to the source code, navigate to issues, make sure, there aren't any duplicates of your problem, and report it there.
-					<br><br>
-
-					<p1>Q: Tr3nch doesn't work when I'm in skiovox!</p1>
-					<br>
-					A: This is because of a bug with the tabs api, it cannot be fixed. 
-					<br><br>
-					`);
-				});
 			} /* As Page */
 
 			console.log("Injecting Tr3nch into current page");
