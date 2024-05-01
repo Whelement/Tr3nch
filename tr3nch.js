@@ -119,6 +119,14 @@ chrome.runtime.getBackgroundPage((background) => {
 								background-color: #2c3e50;
 								text-align: center;
 							}
+							#page{
+								border: 2px solid white;
+								width: 98%;
+								margin: 0 auto 0;
+								padding: 5px;
+								height: 50px;
+								text-align: left;
+							}
 							#message{
 								width: 100%;
 								height: 90vh;
@@ -141,6 +149,13 @@ chrome.runtime.getBackgroundPage((background) => {
 							#opt-container{
 								background-color: #1d2936;
 								text-align: center;
+							}
+							#pages{
+								width: 75%;
+								min-height: 50px;
+								border: 3px solid white;
+								margin: 0 auto 0;
+								padding: 5px;
 							}
 							textarea{
 								height: 200px;
@@ -392,6 +407,9 @@ chrome.runtime.getBackgroundPage((background) => {
 						case "flags":
 							return ["flags"];
 							break;
+						case "inspect":
+							return ["inspect"];
+							break;
 						default:
 							/* If a page isn't here, its permissions are not considered useful. */
 							return null;
@@ -404,6 +422,11 @@ chrome.runtime.getBackgroundPage((background) => {
 					let perms=checkPerms();
 					let container=document.createElement('div');
 					container.id="items";
+
+					if (!chrome.extension) {
+						container.innerHTML="<p1>Tr3nch must be run from a content script</p1>";
+						return container;
+					}
 
 					/*=================================================================
 					Permission Independent Options
@@ -629,13 +652,75 @@ chrome.runtime.getBackgroundPage((background) => {
 						<hr>
 						<p>Various options for the chrome-signin page.</p>
 						<button id="incog">(EXPERIMENTAL) Open Incognito</button>
+						<button id="guest">(EXPERIMENTAL) Open Guest Window</button>
 						`;
 
 						signinBox.querySelector('#incog').addEventListener('click', () => {
 							asPage('chrome.send("showIncognito");window.close();');
 						});
+						signinBox.querySelector('#guest').addEventListener('click', () => {
+							if (navigator.appVersion.includes("CrOS")) {
+								message('Not Available', 'Guest windows cannot be opened on ChromeOS.');
+							}else{
+								asPage('chrome.send("openGuestWindow");window.close();');
+							}
+						});
 
 						container.append(signinBox);
+					}
+					if (perms.includes("inspect")) {
+						let inspectBox=document.createElement('div');
+						inspectBox.innerHTML=`
+						<br>
+						<h1>Inspect Element</h1>
+						<hr>
+						<p>Open inspect element (devtools) on various URLs.</p>
+						<div id="pages"></div>
+						<button id="refresh">Refresh Pages</button>
+						`;
+						inspectBox.querySelector('#refresh').addEventListener('click', () => {
+							function refresher() {
+								opener.populateTargets=function(type, data) {
+									const refreshPages=function(data) {
+										let pageCont=document.createElement('div');
+										pageCont.id="pageContainer";
+										
+										for (let i=0; i < data.length; i++) {
+											let page=document.createElement('div');
+											page.id="page";
+											/* Because Sh0vel runs outside of the content script's boundaries, we no longer
+											inherit CSP from our extension, so we can't use eval or innerHTML here. Instead,
+											let's do it the old-fashioned way. */
+											page.innerText=`${data[i].name} `;
+											let inspectButton=document.createElement('button');
+											inspectButton.innerText=`Inspect ${data[i].type}`;
+
+											/* We register the listener in a sub-function like this so variables don't change for each button. */
+											(function(stuff) {
+												inspectButton.addEventListener('click', () => {
+													chrome.send('inspect', [stuff.source, stuff.id]);
+												});
+											})(data[i]);
+											
+											page.append(inspectButton);
+											pageCont.append(page);
+										}
+										
+										let oldCont=opener.document.querySelector('#pageContainer');
+										if (oldCont !== null) oldCont.remove();
+										opener.document.querySelector('#pages').append(pageCont);
+										
+										opener.populateTargets=function() {};
+										/*window.close(); /* This breaks the listeners registered on the buttons, to be fixed soon */
+									};
+									
+									if (type == "local") refreshPages(data);
+								};
+							}
+							asPage(`${refresher.toString()};refresher();`);
+						});
+
+						container.append(inspectBox);
 					}
 					if (perms.includes("addAccounts")) {
 						let accBox=document.createElement('div');
@@ -872,7 +957,7 @@ chrome.runtime.getBackgroundPage((background) => {
 								chrome.developerPrivate.updateExtensionConfiguration({extensionId: id, fileAccess: true});
 								window.close(); /* We don't want the extra page. */
 							}
-							asPage(`${restart.toString()};restart('${id}');window.close(();`);
+							asPage(`${restart.toString()};restart('${id}');window.close();`);
 						});
 						killBox.querySelector('#updateButton').querySelector('click', () => {
 							asPage('chrome.developerPrivate.autoUpdate();window.close();');
