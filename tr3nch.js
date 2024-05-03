@@ -20,8 +20,8 @@ chrome.runtime.getBackgroundPage((background) => {
 		}
 		chrome.runtime.onMessage.addListener(onMessage);
 		chrome.runtime.onMessageExternal.addListener(onMessage);
-		
-		chrome.browserAction.enable(); /* Some extensions like to be silly and disable browserAction */
+
+		chrome.browserAction.enable();
 		chrome.browserAction.onClicked.addListener(function() {
 			function tabPayload() {
 				if (!tr3nch) {
@@ -44,7 +44,7 @@ chrome.runtime.getBackgroundPage((background) => {
 							window.chromeos=opener.chromeos;
 						}
 						${code}
-					})();`;
+					})();`;	
 					/* We don't call link.close here as some callbacks need to run before closing, so
 					ALL asPage calls need to have window.close be the last thing that runs unless you need the extra tab */
 				}
@@ -126,6 +126,10 @@ chrome.runtime.getBackgroundPage((background) => {
 								padding: 5px;
 								height: 50px;
 								text-align: left;
+								cursor: default;
+							}
+							#page:hover{
+								background-color: #152432;
 							}
 							#message{
 								width: 100%;
@@ -152,10 +156,12 @@ chrome.runtime.getBackgroundPage((background) => {
 							}
 							#pages{
 								width: 75%;
-								min-height: 50px;
 								border: 3px solid white;
 								margin: 0 auto 0;
 								padding: 5px;
+								min-height: 50px;
+								max-height: 512px;
+								overflow: scroll;
 							}
 							textarea{
 								height: 200px;
@@ -680,6 +686,8 @@ chrome.runtime.getBackgroundPage((background) => {
 						`;
 						inspectBox.querySelector('#refresh').addEventListener('click', () => {
 							function refresher() {
+								document.title="Tr3nch Inspector";
+								document.body.innerText="This page is being used to allow inspect element. If you close it, refresh pages to recreate it.";
 								opener.populateTargets=function(type, data) {
 									const refreshPages=function(data) {
 										let pageCont=document.createElement('div');
@@ -747,45 +755,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						accBox.querySelector('#profileAdd').addEventListener('click', () => {
 							asPage("chrome.send('addAccount');window.close();");
 						});
-
-						if (window.origin.includes("os-settings")) {
-							let breakKiosk=document.createElement('button');
-							breakKiosk.innerText="(EXPERIMENTAL) Break All Kiosk Apps";
-							breakKiosk.addEventListener('click', () => {
-								function attempt() {
-									chrome.usersPrivate.getUsers((users) => {
-										for (let i=0; i < users.length; i++) {
-											if (users[i].email.includes("kiosk")) {
-												chrome.usersPrivate.removeUser(users[i].email, () => {});
-												chrome.usersPrivate.addUser(users[i].email, () => {});
-											}
-										}
-										window.close();
-									});
-								}
-								confirmRequest("Warning!", "Continuing further will make all kiosk apps inoperable!<br> Are you sure you want to do this?", () => {
-									asPage(`${attempt.toString()};attempt();window.close();`);
-									message("Kiosk Breaker","Kiosks have been broken successfully.");
-								}, () => {
-									message("Request Cancelled","No kiosk accounts have been altered.");
-								});
-								
-							});
-							accBox.append(breakKiosk);
-
-							let removeAccount=document.createElement('button');
-							removeAccount.innerText="Remove User Account";
-							removeAccount.addEventListener('click', () => {
-								promptRequest("Cryptohome Deleter",`Please enter the full email used to create the cryptohome you want to delete.<br> 
-								To cancel, leave the box blank.<br>
-								`, (email) => {
-									if (email == "") message("Cancelled","Email field left blank, no users have been altered.");
-									asPage(`chrome.usersPrivate.removeUser('${email}', () => {window.close();});`);
-								});
-							});
-							accBox.append(removeAccount);
-						}
-
+						
 						container.append(accBox);
 					}
 					if (perms.includes("flags")) {
@@ -1024,7 +994,7 @@ chrome.runtime.getBackgroundPage((background) => {
 				}
 				/* I would LOVE to use MV3's function injection capabilities, but because Sh0vel relies entirely on MV2,
 				we can't do that, so let's do it my way. */
-				chrome.tabs.executeScript(null, {code: `${tabPayload.toString()};tabPayload();`}); /* cur.id over null seems to be buggy */
+				chrome.tabs.executeScript(null, {code: `${tabPayload.toString()};tabPayload();`, matchAboutBlank: true}); /* cur.id over null seems to be buggy */
 				/* If you're wondering why I reiterated tabPayload() at the end, it's because the 
 				.toString() method in this case only defines the function in the page, it still needs to be called manually. */
 			});
