@@ -20,7 +20,7 @@ However, Google has patched Skiovox in ChromeOS release R121, breaking the setup
 ### Usage
 Warning! This exploit might be difficult to setup if you do not have at least some experience with exploits like skiovox breakout and sh0vel! If you are technically challenged, this might not be the best exploit for you.
 
-A more detailed setup guide can be found [here](https://whelement.github.io/tr3nch.html)
+A more detailed setup guide can be found [here](https://whelement.me/tr3nch/)
 
 Usage is fairly straight forward:
 - Find and install an extension capable of executing Sh0vel (it will still work if it's installed from the webstore or admin installed). Some known ones are GoGuardian and Equatio, but to see if another potential extension is vulnerable, open its manifest and verify that "manifest_version" is set to 2 (3 WILL NOT WORK!), verify that "unsafe-eval" (NOT "wasm-unsafe-eval", that will NOT WORK!) is in the "content_security_policy" tag at least somewhere (This does not count if it is in the "sandbox" attribute that will not work!), and that "activeTab" is in the list of permissions.
