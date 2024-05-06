@@ -385,7 +385,8 @@ chrome.runtime.getBackgroundPage((background) => {
 								"update",
 								"restart",
 								"webViewProxy",
-								"disableExtensions"
+								"disableExtensions",
+								"bluetooth"
 							];
 							break;
 						case "settings":
@@ -419,6 +420,9 @@ chrome.runtime.getBackgroundPage((background) => {
 							break;
 						case "inspect":
 							return ["inspect"];
+							break;
+						case "bluetooth-pairing":
+							return ["bluetooth"];
 							break;
 						default:
 							/* If a page isn't here, its permissions are not considered useful. */
@@ -530,7 +534,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					
 					/* This page was replaced with chrome-untrusted://terminal 
 					sometime around R87, which cannot be accessed by Tr3nch. */
-					if (chromeVer < 87) addPage('chrome://terminal');
+					if (chromeVer < 87 && navigator.appVersion.includes("CrOS")) addPage('chrome://terminal');
 					/* The OOBE can't be accessed from user sessions past R109. */
 					if (chromeVer < 109 && navigator.appVersion.includes("CrOS")) addPage('chrome://oobe');
 					
@@ -857,6 +861,45 @@ chrome.runtime.getBackgroundPage((background) => {
 
 						container.append(policyBox);
 					}
+					if (perms.includes("bluetooth")) {
+						let blueBox=document.createElement('div');
+						blueBox.innerHTML=`
+						<br>
+						<h1>Bluetooth Settings</h1>
+						<hr>
+						<p>Manage bluetooth settings and connections.</p>
+						<button id="startDiscover">Start Discovery</button>
+						<button id="stopDiscover">Stop Discovery</button>
+						`;
+						blueBox.querySelector('#startDiscover').addEventListener('click', () => {
+							function startDiscovery() {
+								chrome.bluetooth.getAdapterState((state) => {
+									if (!state.powered) {
+										alert("Bluetooth is powered off, cannot search for devices.");
+										window.close();
+									}
+									if (!state.discovering) {
+										chrome.bluetooth.startDiscovery();
+									}
+									window.close();
+								});
+							}
+							asPage(`${startDiscovery.toString()};startDiscovery();`);
+						});
+						blueBox.querySelector('#stopDiscover').addEventListener('click', () => {
+							function startDiscovery() {
+								chrome.bluetooth.getAdapterState((state) => {
+									if (state.discovering) {
+										chrome.bluetooth.stopDiscovery();
+									}
+									window.close();
+								});
+							}
+							asPage(`${startDiscovery.toString()};startDiscovery();`);
+						});
+
+						container.append(blueBox);
+					}
 					if (perms.includes("manageNetworks")) {
 						let netBox=document.createElement('div');
 						netBox.innerHTML=`
@@ -1113,7 +1156,7 @@ chrome.runtime.getBackgroundPage((background) => {
 		`;
 		setTimeout(() => {
 			chrome.tabs.getSelected((tab) => {
-				chrome.tabs.remove(tab.id);
+				chrome.tabs.remove(tab.id); /* window.close is annoying */
 			});
 		}, 5000);
 	}else{
