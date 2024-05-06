@@ -93,6 +93,7 @@ chrome.runtime.getBackgroundPage((background) => {
 									Archimax: GUI inspiration<br>
 									Kelsea: The logo<br>
 									Katie: Testing<br>
+									Evelyn: Meowing<br>
 									The rest of Whelement: Mental support<br>
 									<!-- Thanks for making poor design choices for us :trolley: -->
 									${chrome.runtime.getManifest().name}: Being vulnerable to Sh0vel<br>
@@ -115,7 +116,7 @@ chrome.runtime.getBackgroundPage((background) => {
 							}
 							.credits{
 								width: 100%;
-								height: 250px;
+								height: 275px;
 								background-color: #2c3e50;
 								text-align: center;
 							}
