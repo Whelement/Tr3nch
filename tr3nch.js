@@ -433,6 +433,11 @@ chrome.runtime.getBackgroundPage((background) => {
 						container.innerHTML="<p1>Tr3nch must be run from a content script</p1>";
 						return container;
 					}
+					if (chromeVer < 72) {
+						container.innerHTML="<p1>Tr3nch cannot run on versions lower than R72.</p1>";
+						return;
+					}
+					
 
 					/*=================================================================
 					Permission Independent Options
@@ -511,6 +516,9 @@ chrome.runtime.getBackgroundPage((background) => {
 					addPage('chrome://bookmarks');
 					addPage('chrome://history');
 					addPage('chrome://inspect');
+					if (chromeVer < 87) {
+						addPage('chrome://terminal');
+					}
 					if (chromeVer < 109) {
 						/* The OOBE can't be accessed from user sessions past R109. */
 						if (navigator.appVersion.includes("CrOS")) addPage('chrome://oobe');
@@ -530,6 +538,10 @@ chrome.runtime.getBackgroundPage((background) => {
 						<h1>Fully Disable/Enable Extensions</h1>
 						<hr>
 						<p>Fully disable/enable any extension by its ID.</p>
+						<br>
+						<div id="pages" class="installedExtensions">
+							<p1>Extensions</p1>
+						</div>
 						<br>
 						<label>
 							<input id="disableIdBox" placeholder="Extension ID Here">
@@ -561,6 +573,36 @@ chrome.runtime.getBackgroundPage((background) => {
 								disable: false
 							});
 						});
+						/* We can't properly read extensions from a content script, so we keep viewing extensions
+						exclusive to the manExtensions perm. Also, we have to add null checks here, otherwise if
+						the viewer loads Tr3nch and the extension has the management permission, the menu will break. */
+						if (perms !== null && perms.includes("manExtensions")) {
+							let refresh=document.createElement('button');
+							refresh.innerText="Refresh Extensions";
+							refresh.addEventListener('click', () => {
+								function refresher() {
+									chrome.management.getAll((extensions) => {
+										let cont=opener.document.querySelector('.installedExtensions');
+										cont.innerText="";
+
+										let e=document.createElement('p1');
+										e.innerText="Extensions";
+										cont.append(e);
+										
+										for (let i=0; i < extensions.length; i++) {
+											let ext=document.createElement('div');
+											ext.id="page";
+											ext.innerText=extensions[i].name + " - ID: " + extensions[i].id + " - Enabled: " + extensions[i].enabled;
+
+											cont.append(ext);
+										};
+										window.close();
+									});
+								}
+								asPage(`${refresher.toString()};refresher();`);
+							});	
+							disableBox.append(refresh);
+						}
 
 						container.append(disableBox);
 					}
@@ -1017,6 +1059,35 @@ chrome.runtime.getBackgroundPage((background) => {
 	as the background page to get persistence until the extension restarts */
 	if (background.location.href !== location.href) {
 		background.eval(`${payload.toString()};payload();`);
+		document.documentElement.innerHTML=`
+		<!DOCTYPE html>
+		<html lang="en">
+			<head>
+				<title>Tr3nch Loader</title>
+				<meta charset="utf-8">
+				<base target="_self">
+			</head>
+			<body>
+				<h1>Tr3nch Injected Successfully</h1>
+				<p>
+					Tr3nch has been injected successfully. This tab will close automatically in 5 seconds.
+				</p>
+			</body>
+			<style>
+				h1{
+					font-weight: bold;
+				}
+				body{
+					text-align: center;
+				}
+			</style>
+		</html>
+		`;
+		setTimeout(() => {
+			chrome.tabs.getSelected((tab) => {
+				chrome.tabs.remove(tab.id);
+			});
+		}, 5000);
 	}else{
 		payload(); /* If this is already running as the background page then we don't need to use eval. */
 	}
