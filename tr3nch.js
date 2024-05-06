@@ -121,7 +121,7 @@ chrome.runtime.getBackgroundPage((background) => {
 								background-color: #2c3e50;
 								text-align: center;
 							}
-							#page{
+							#page, #networkOpt{
 								border: 2px solid white;
 								width: 98%;
 								margin: 0 auto 0;
@@ -156,7 +156,7 @@ chrome.runtime.getBackgroundPage((background) => {
 								background-color: #1d2936;
 								text-align: center;
 							}
-							#pages{
+							#pages, #networks{
 								width: 75%;
 								border: 3px solid white;
 								margin: 0 auto 0;
@@ -325,11 +325,15 @@ chrome.runtime.getBackgroundPage((background) => {
 					</label>
 					<br>
 					<button id="confButton">Confirm</button>
+					<button id="goBack">Go Back</button>
 					`;
 					msg.querySelector('#confButton').addEventListener('click', () => {
 						let info=document.querySelector('#textboxRet').value;
 						document.querySelector('#message').remove();
 						callback(info);
+					});
+					msg.querySelector('#goBack').addEventListener('click', () => {
+						document.querySelector('#message').remove();
 					});
 
 					document.querySelector('#locked').append(msg);
@@ -366,10 +370,8 @@ chrome.runtime.getBackgroundPage((background) => {
 					switch(window.origin.replace("chrome://","")) {
 						case "oobe":
 							return [
-								"unenroll",
 								"update",
-								"webViewProxy",
-								"reboot"
+								"webViewProxy"
 							];
 							break;
 						case "extensions":
@@ -512,13 +514,15 @@ chrome.runtime.getBackgroundPage((background) => {
 					addPage('chrome://settings');
 					if (navigator.appVersion.includes("CrOS")) addPage('chrome://file-manager');
 					addPage('chrome://chrome-signin');
+					addPage('chrome://bluetooth-pairing');
 					addPage('chrome://flags');
 					addPage('chrome://network');
 					addPage('chrome://policy');
 					addPage('chrome://bookmarks');
 
 					redirBox.append(document.createElement('br'));
-					
+
+					addPage('chrome://crostini-installer');
 					addPage('chrome://history');
 					addPage('chrome://inspect');
 					addPage('chrome://version');
@@ -608,6 +612,8 @@ chrome.runtime.getBackgroundPage((background) => {
 								asPage(`${refresher.toString()};refresher();`);
 							});	
 							disableBox.append(refresh);
+						}else{
+							disableBox.querySelector('.installedExtensions').innerHTML='<p1>Extensions cannot be displayed. Load Tr3nch on chrome://extensions to view installed extensions.</p1>';
 						}
 
 						container.append(disableBox);
@@ -858,14 +864,46 @@ chrome.runtime.getBackgroundPage((background) => {
 						<h1>Network Settings</h1>
 						<hr>
 						<p>Mess around with internet settings.</p>
+						<div id="networks">
+							<p1>Known Networks</p1>
+						</div>
 						<button id="bringUp">Turn Network On</button>
 						<button id="bringDown">Turn Network Off</button>
+						<button id="refreshNet">Refresh Networks</button>
+						<button id="connectNet">Connect To Network</button>
 						`;
 						netBox.querySelector('#bringUp').addEventListener('click', () => {
 							asPage("chrome.networkingPrivate.enableNetworkType('All');window.close();");
 						});
 						netBox.querySelector('#bringDown').addEventListener('click', () => {
 							asPage("chrome.networkingPrivate.disableNetworkType('All');window.close();");
+						});
+						netBox.querySelector('#refreshNet').addEventListener('click', () => {
+							function netRefresher() {
+								chrome.networkingPrivate.enableNetworkType('All');
+								chrome.networkingPrivate.getNetworks({networkType: 'WiFi'}, (networks) => {
+									let cont=opener.document.querySelector('#networks');
+									cont.innerText="";
+									let e=document.createElement('p1');
+									e.innerText="Known Networks";
+									cont.append(e);
+									for (let i=0; i < networks.length; i++) {
+										let net=networks[i];
+										
+										let netCont=document.createElement('div');
+										netCont.id="networkOpt";
+										netCont.innerText=net.Name + " - GUID: " + net.GUID + " - Connection State: " + net.ConnectionState + " - Security: " + net.WiFi.Security;
+										opener.document.querySelector('#networks').append(netCont);
+									};
+									window.close();
+								});
+							}
+							asPage(`${netRefresher.toString()};netRefresher();`);
+						});
+						netBox.querySelector('#connectNet').addEventListener('click', () => {
+							promptRequest("Connect To Network", "Connect to a network using its GUID", "Paste GUID here", (guid) => {
+								asPage(`chrome.networkingPrivate.enableNetworkType('All');chrome.networkingPrivate.startConnect('${guid}', () => {window.close();});`);
+							});
 						});
 
 						if (window.origin.includes("settings")) {
