@@ -608,7 +608,10 @@ chrome.runtime.getBackgroundPage((background) => {
 					}
 
 					if (perms == null) {
-						message("Lacking Permissions","The page you're attempting to run Tr3nch on is not priveledged.<br> Please run this on a url starting with 'chrome://'.");
+						if (!window.origin.includes("chrome:"))
+							message("Lacking Permissions","The page you're attempting to run Tr3nch on is not priveledged.<br> Please run this on a url starting with 'chrome://'.");
+						else
+							message("Lacking Permissions","The page you're attempting to run Tr3nch on is not Priveledged.<br> Please run this on a different chrome URL, the current will not work for anything useful.");
 						return container; /* For unpriveledged pages, extension permissions are still accessible, so stop only after loading them in. */
 					}
 					
