@@ -1,10 +1,7 @@
 # Tr3nch
-Tr3nch is an exploit allowing you to open a menu on various "chrome urls" to perform
+Tr3nch allows you to open a menu on various "chrome urls" to perform
 various actions that a normal extension is not capable of doing, and is kind of like
-the spiritual successor to the "Swamp ULTRA" exploit due to its behaviour and the
-fact that goguardian users are guarunteed to be able to do this. It utilizes a bug
-in chrome urls to allow for code execution with access to the chrome API (this bug
-has been dubbed "Sh0vel") and abuses this bug to do a number of things, including:
+the spiritual successor to "Swamp ULTRA" due to its behaviour. It utilizes a code execution in chrome urls to do a number of things, including:
 - Adding gmails regardless of policy
 - Open a webview proxy invisible to some filters
 - Edit network settings for any network
@@ -14,11 +11,11 @@ has been dubbed "Sh0vel") and abuses this bug to do a number of things, includin
 
 And more.
 
-It is very unlikely that this exploit will ever be patched, as it entirely revolves around Sh0vel, which itself entirely revolves around the extensions-on-chrome-urls flag, and is technically just an automated version of the Point-Blank exploit, which Google also did not patch (unless you count the R115 bookmarklet restrictions) due to it being technically intended behaviour.
-However, Google has patched Skiovox in ChromeOS release R121, breaking the setup chain. While it possible to downgrade to R120 currently to set it up, it is likely you won't be able to do this forever. The only part that matters is that you have code execution in an extension and it runs the contents of installer.js, wether you do that through DNS spoofing, XSS, or something else does not matter.
+
+However, Google has patched Skiovox in ChromeOS release R121, breaking the setup chain. While it possible to downgrade to R120 currently to set it up (only for auto enrollment), it is likely you won't be able to do this forever. Code execution in extensionsis necessary
 
 ### Usage
-Warning! This exploit might be difficult to setup if you do not have at least some experience with exploits like skiovox breakout and sh0vel! If you are technically challenged, this might not be the best exploit for you.
+Warning! This might be difficult to setup if you do not have at least some experience with skiovox breakout and sh0vel! 
 
 A more detailed setup guide can be found [here](https://whelement.me/tr3nch/)
 
