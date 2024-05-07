@@ -12,7 +12,7 @@ the spiritual successor to "Swamp ULTRA" due to its behaviour. It utilizes a cod
 And more.
 
 
-However, Google has patched Skiovox in ChromeOS release R121, breaking the setup chain. While it possible to downgrade to R120 currently to set it up (only for auto enrollment), it is likely you won't be able to do this forever. Code execution in extensionsis necessary
+However, Google has patched Skiovox in ChromeOS release R121, breaking the setup chain. While it possible to downgrade to R120 currently to set it up (only for auto enrollment), it is likely you won't be able to do this forever. Code execution in extensions is necessary
 
 ### Usage
 Warning! This might be difficult to setup if you do not have at least some experience with skiovox breakout and sh0vel! 
