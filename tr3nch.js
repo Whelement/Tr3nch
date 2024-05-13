@@ -1,12 +1,11 @@
-
 chrome.runtime.getBackgroundPage((background) => {
 	function payload() {
-		const onMessage=function(msg) {
+		const onMessage=function(msg, sender, respond) {
 			switch(msg.cmd) {
 				case "runCode":
 					/* Since we're the background page, we'll want to be able to run code from the menu, and
 					it just so happens Sh0vel requires eval, soooooo...*/
-					eval(msg.code);
+					respond(eval(msg.code));
 					break;
 				case "disable":
 					chrome.management.setEnabled(msg.id, !msg.disable);
@@ -51,8 +50,8 @@ chrome.runtime.getBackgroundPage((background) => {
 				}
 				/* For convenience, we'll want to run code as the extension too, as it may also
 				have useful permissions that can be exploited.*/
-				const asExt=function(code) {
-					chrome.runtime.sendMessage({cmd: "runCode", code: code});
+				const asExt=function(code, ret=null) {
+					chrome.runtime.sendMessage(chrome.runtime.id, {cmd: "runCode", code: code}, null, ret);
 				}
 
 				/* Here we load in the base GUI, the options will be filled in later by loadMenuItems. */
@@ -165,7 +164,7 @@ chrome.runtime.getBackgroundPage((background) => {
 								max-height: 512px;
 								overflow: scroll;
 							}
-							textarea{
+							.evalBox{
 								height: 200px;
 								width: 550px;
 								color: white;
@@ -173,6 +172,18 @@ chrome.runtime.getBackgroundPage((background) => {
 								background-color: #000;
 								border-radius: 20px;
 								border: 3px solid white;
+								display: inline-block;
+							}
+							#extOutBox, #pageOutBox{
+								height: 200px;
+								width: 200px;
+								color: white;
+								padding: 10px;
+								background-color: #000;
+								border-radius: 20px;
+								border: 3px solid white;
+								display: inline-block;
+								overflow: scroll;
 							}
 							input{
 								height: 20px;
@@ -459,12 +470,22 @@ chrome.runtime.getBackgroundPage((background) => {
 					<h1>Run Code As Background Page</h1>
 					<hr>
 					<p>Run code directly as the background page of the extension Tr3nch is injected into</p>
-					<textarea spellcheck="false" id="extEvalBox"></textarea>
+					<br>
+					<textarea spellcheck="false" class="evalBox" id="extEvalBox"></textarea>
+					<div id="extOutBox"></div>
 					<br>
 					<button id="extEvalButton">Run as Background</button>
+					<button id="consClear">Clear Output</button>
 					`;
 					extEvalBox.querySelector('#extEvalButton').addEventListener('click', () => {
-						asExt(document.querySelector('#extEvalBox').value);
+						asExt(document.querySelector('#extEvalBox').value, (ret) => {
+							let cont=document.querySelector('#extOutBox');
+							cont.append(JSON.stringify(ret));
+							cont.append(document.createElement('br'));
+						});
+					});
+					extEvalBox.querySelector('#consClear').addEventListener('click', () => {
+						document.querySelector('#extOutBox').innerHTML="Console Was Cleared.<br>";
 					});
 					container.append(extEvalBox);
 
@@ -474,7 +495,8 @@ chrome.runtime.getBackgroundPage((background) => {
 					<h1>Run Code As Sh0vel</h1>
 					<hr>
 					<p>Run code with direct access to this page's chrome API via Sh0vel. Access this page's DOM with window.opener.</p>
-					<textarea spellcheck="false" id="pbEvalBox"></textarea>
+					<br>
+					<textarea spellcheck="false" class="evalBox id="pbEvalBox"></textarea>
 					<br>
 					<button id="pbEvalButton">Run as Sh0vel</button>
 					`;
@@ -489,12 +511,20 @@ chrome.runtime.getBackgroundPage((background) => {
 					<h1>Run Code On This Page</h1>
 					<hr>
 					<p>Run code directly as this content script without chrome API access.</p>
-					<textarea spellcheck="false" id="pageEvalBox"></textarea>
+					<br>
+					<textarea spellcheck="false" class="evalBox" id="pageEvalBox"></textarea>
+					<div id="pageOutBox"></div>
 					<br>
 					<button id="pageEvalButton">Run as Page</button>
+					<button id="consClear">Clear Ouput</button>
 					`;
 					pageEvalBox.querySelector('#pageEvalButton').addEventListener('click', () => {
-						eval(document.querySelector('#pageEvalBox').value);
+						let cont=document.querySelector('#pageOutBox');
+						cont.append(JSON.stringify(eval(document.querySelector('#pageEvalBox').value)));
+						cont.append(document.createElement('br'));
+					});
+					pageEvalBox.querySelector('#consClear').addEventListener('click', () => {
+						document.querySelector('#pageOutBox').innerHTML="Console Was Cleared.<br>";
 					});
 					container.append(pageEvalBox);
 
