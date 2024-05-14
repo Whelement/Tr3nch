@@ -1102,7 +1102,7 @@ chrome.runtime.getBackgroundPage((background) => {
 								setInterval(() => {
 									ret=!ret;
 									chrome.developerPrivate.updateExtensionConfiguration({extensionId: id, fileAccess: ret});
-								}, 3000);
+								}, 1500);
 							}
 							asPage(`${disable.toString()};disable('${id}');`);
 						});
