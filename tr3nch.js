@@ -585,7 +585,7 @@ chrome.runtime.getBackgroundPage((background) => {
 					Put options that DO need specific page permissions here
 					=================================================================*/
 					
-					if (chrome.runtime.getManifest().permissions.includes("management") || (perms.includes("manExtensions") && chromeVer < 106)) {
+					if (chrome.runtime.getManifest().permissions.includes("management") || (perms !== null && perms.includes("manExtensions") && chromeVer < 106)) {
 						let disableBox=document.createElement('div');
 						disableBox.innerHTML=`
 						<br>
