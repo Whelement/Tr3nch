@@ -1,4 +1,4 @@
-chrome.runtime.getBackgroundPage((background) => {
+const withBackground=function(background) {
 	function payload() {
 		const onMessage=function(msg, sender, respond) {
 			switch(msg.cmd) {
@@ -21,14 +21,14 @@ chrome.runtime.getBackgroundPage((background) => {
 		chrome.runtime.onMessage.addListener(onMessage);
 		chrome.runtime.onMessageExternal.addListener(onMessage);
 
-		chrome.browserAction.enable();
-		chrome.browserAction.onClicked.addListener(function() {
+		const onClicked=function() {
 			function tabPayload() {
 				if (!tr3nch) {
 					var tr3nch=true;
 				}else{
 					return;
 				} /* Don't inject Tr3nch twice. */
+				console.log("Setting up Tr3nch menu");
 				
 				/* asPage is what really ties everything together, with bookmarklets having a bug that
 				lets us run code outside of the content script's boundaries. This has been dubbed
@@ -46,7 +46,7 @@ chrome.runtime.getBackgroundPage((background) => {
 						}
 						${code}
 					})();
-					`;	
+					`;
 					/* We don't call link.close here as some callbacks need to run before closing, so
 					ALL asPage calls need to have window.close be the last thing that runs unless you need the extra tab */
 				}
@@ -538,47 +538,49 @@ chrome.runtime.getBackgroundPage((background) => {
 					});
 					container.append(pageEvalBox);
 
-					let redirBox=document.createElement('div');
-					redirBox.innerHTML=`
-					<br>
-					<h1>Quick Navigate</h1>
-					<hr>
-					<p>Quickly redirect to various URLs to run Tr3nch on.</p>
-					<br>
-					`;
-					function addPage(page) {
-						let redir=document.createElement('button');
-						redir.innerText=page.replace("chrome://","");
-						/* I have no clue why asExt is undefined in the Function statement here, so we'll just manually send the message. */
-						redir.addEventListener('click', Function(`chrome.runtime.sendMessage({cmd: "tabOpen", url: "${page}"});`));
-						redirBox.append(redir);
+					if (chrome.runtime.getManifest().manifest_version !== 3) {
+						let redirBox=document.createElement('div');
+						redirBox.innerHTML=`
+						<br>
+						<h1>Quick Navigate</h1>
+						<hr>
+						<p>Quickly redirect to various URLs to run Tr3nch on.</p>
+						<br>
+						`;
+						function addPage(page) {
+							let redir=document.createElement('button');
+							redir.innerText=page.replace("chrome://","");
+							/* I have no clue why asExt is undefined in the Function statement here, so we'll just manually send the message. */
+							redir.addEventListener('click', Function(`chrome.runtime.sendMessage({cmd: "tabOpen", url: "${page}"});`));
+							redirBox.append(redir);
+						}
+						addPage('chrome://extensions');
+						if (navigator.appVersion.includes("CrOS")) addPage('chrome://os-settings');
+						addPage('chrome://settings');
+						if (navigator.appVersion.includes("CrOS")) addPage('chrome://file-manager');
+						addPage('chrome://chrome-signin');
+						addPage('chrome://bluetooth-pairing');
+						addPage('chrome://flags');
+						addPage('chrome://network');
+						addPage('chrome://policy');
+						addPage('chrome://bookmarks');
+
+						redirBox.append(document.createElement('br'));
+	
+						addPage('chrome://crostini-installer');
+						addPage('chrome://history');
+						addPage('chrome://inspect');
+						addPage('chrome://version');
+						addPage('chrome://system');
+					
+						/* This page was replaced with chrome-untrusted://terminal 
+						sometime around R87, which cannot be accessed by Tr3nch. */
+						if (chromeVer < 87 && navigator.appVersion.includes("CrOS")) addPage('chrome://terminal');
+						/* The OOBE can't be accessed from user sessions past R109. */
+						if (chromeVer < 109 && navigator.appVersion.includes("CrOS")) addPage('chrome://oobe');
+						
+						container.append(redirBox);
 					}
-					addPage('chrome://extensions');
-					if (navigator.appVersion.includes("CrOS")) addPage('chrome://os-settings');
-					addPage('chrome://settings');
-					if (navigator.appVersion.includes("CrOS")) addPage('chrome://file-manager');
-					addPage('chrome://chrome-signin');
-					addPage('chrome://bluetooth-pairing');
-					addPage('chrome://flags');
-					addPage('chrome://network');
-					addPage('chrome://policy');
-					addPage('chrome://bookmarks');
-
-					redirBox.append(document.createElement('br'));
-
-					addPage('chrome://crostini-installer');
-					addPage('chrome://history');
-					addPage('chrome://inspect');
-					addPage('chrome://version');
-					addPage('chrome://system');
-					
-					/* This page was replaced with chrome-untrusted://terminal 
-					sometime around R87, which cannot be accessed by Tr3nch. */
-					if (chromeVer < 87 && navigator.appVersion.includes("CrOS")) addPage('chrome://terminal');
-					/* The OOBE can't be accessed from user sessions past R109. */
-					if (chromeVer < 109 && navigator.appVersion.includes("CrOS")) addPage('chrome://oobe');
-					
-					container.append(redirBox);
 
 					/*=================================================================
 					Permission Dependent Options
@@ -1144,38 +1146,75 @@ chrome.runtime.getBackgroundPage((background) => {
 
 			console.log("Injecting Tr3nch into current page");
 
-			chrome.tabs.getSelected((cur) => {
-				if (cur.url.includes("webstore")) {
-					alert("Tr3nch cannot operate on the chrome webstore.");
-					/* For those curious why, tabs.executeScript has a special case where it will
-					refuse to run on the webstore, making Tr3nch impossible to inject into it. */
-					return;
-				}
-				if (cur.url.includes("chrome-untrusted:")) {
-					alert("Tr3nch cannot be injected into urls with the 'chrome-untrusted:' protocol.");
-					/* The --extensions-on-chrome-urls flag that this relies on does not grant access 
-					to the chrome-untrusted protocol, so no access to pages like crosh is possible. */
-					return;
-				}
-				/* I would LOVE to use MV3's function injection capabilities, but because Sh0vel relies entirely on MV2,
-				we can't do that, so let's do it my way. */
-				chrome.tabs.executeScript(null, {code: `${tabPayload.toString()};tabPayload();`, matchAboutBlank: true}); /* cur.id over null seems to be buggy */
-				/* If you're wondering why I reiterated tabPayload() at the end, it's because the 
-				.toString() method in this case only defines the function in the page, it still needs to be called manually. */
-			});
-		}); /* On Clicked */
+			if (chrome.runtime.getManifest().manifest_version !== 3) {
+				chrome.tabs.getSelected((cur) => {
+					if (cur.url.includes("webstore")) {
+						alert("Tr3nch cannot operate on the chrome webstore.");
+						/* For those curious why, tabs.executeScript has a special case where it will
+						refuse to run on the webstore, making Tr3nch impossible to inject into it. */
+						return;
+					}
+					if (cur.url.includes("chrome-untrusted:")) {
+						alert("Tr3nch cannot be injected into urls with the 'chrome-untrusted:' protocol.");
+						/* The --extensions-on-chrome-urls flag that this relies on does not grant access 
+						to the chrome-untrusted protocol, so no access to pages like crosh is possible. */
+						return;
+					}
+				
+					chrome.tabs.executeScript(null, {code: `${tabPayload.toString()};tabPayload();`, matchAboutBlank: true});
+					/* If you're wondering why I reiterated tabPayload() at the end, it's because the 
+					.toString() method in this case only defines the function in the page, it still needs to be called manually. */
+				});
+			}else{
+				/* For some reason google removed tabs.getSelected in MV3, leading to this jank. */			
+				chrome.tabs.query({}, (tabs) => {
+					for (let i=0; i < tabs.length; i++) {
+						let cur=tabs[i];
+						if (cur.active) {
+							if (cur.url.includes("webstore")) {
+								alert("Tr3nch cannot operate on the chrome webstore.");
+								/* For those curious why, tabs.executeScript has a special case where it will
+								refuse to run on the webstore, making Tr3nch impossible to inject into it. */
+								return;
+							}
+							if (cur.url.includes("chrome-untrusted:")) {
+								alert("Tr3nch cannot be injected into urls with the 'chrome-untrusted:' protocol.");
+								/* The --extensions-on-chrome-urls flag that this relies on does not grant access 
+								to the chrome-untrusted protocol, so no access to pages like crosh is possible. */
+								return;
+							}
+							
+							chrome.scripting.executeScript({target: {tabId: cur.id}, func: tabPayload});
+						}
+					}
+				});
+			}
+		} /* On Clicked */
+
+		if (manifest.manifest_version !== 3) {
+			chrome.browserAction.enable();
+			chrome.browserAction.onClicked.addListener(onClicked);
+		}else{
+			chrome.action.enable();
+			chrome.action.onClicked.addListener(onClicked);
+		}
 		
 		console.log('Tr3nch injected into current extension.');
 	} /* As Background Page */
 
 	let manifest=chrome.runtime.getManifest();
-	if (!manifest.browser_action) {
+	if (!manifest.browser_action && !manifest.action) {
 		alert("Current extension does not have browserAction permissions, cannot continue.");
 		return;
 	}
 	/* The quotations prevent it from accepting 'wasm-unsafe-eval' which won't work */
-	if (!manifest.content_security_policy.includes("'unsafe-eval'")) { 
+	if (manifest.manifest_version !== 3 && !manifest.content_security_policy.includes("'unsafe-eval'")) { 
 		alert("Current extension does not have permission to use eval, cannot continue.");
+		return;
+	}
+
+	if (manifest.manifest_version == 3 && !manifest.permissions.includes("scripting")) {
+		alert("Current extension does not have scripting permissions, cannot continue.");
 		return;
 	}
 	/* Cool perk of sh0vel: The extension requires eval to work, so we can run code directly
@@ -1206,7 +1245,7 @@ chrome.runtime.getBackgroundPage((background) => {
 			</style>
 		</html>
 		`;
-		setTimeout(() => {
+		if (manifest.manifest_version !== 3) setTimeout(() => {
 			chrome.tabs.getSelected((tab) => {
 				chrome.tabs.remove(tab.id); /* window.close is annoying */
 			});
@@ -1214,4 +1253,10 @@ chrome.runtime.getBackgroundPage((background) => {
 	}else{
 		payload(); /* If this is already running as the background page then we don't need to use eval. */
 	}
-});
+}
+
+if (chrome.runtime.getManifest().manifest_version !== 3) {
+	chrome.runtime.getBackgroundPage(withBackground);
+}else{
+	withBackground(this); /* We can't access the service worker or eval on MV3, so we'll do the best we've got. */
+}
