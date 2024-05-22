@@ -1,4 +1,6 @@
 # Tr3nch
+## This is NOT an exploit, and it does NOT feature unenrollment. 
+This is simply an extension to sh0vel, which isn't a bug or an exploit either, and relies on a flag to execute code on chrome urls, which has no security impact.    
 Tr3nch allows you to open a menu on various "chrome urls" to perform
 various actions that a normal extension is not capable of doing, and is kind of like
 the spiritual successor to "Swamp ULTRA" due to its behaviour. It utilizes a code execution in chrome urls to do a number of things, including:
